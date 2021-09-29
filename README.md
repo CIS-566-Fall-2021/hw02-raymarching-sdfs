@@ -33,10 +33,11 @@ following image, your rays are being cast correctly:
 The subject of your scene should be based on some reference image, such as a
 shot from a movie or a piece of artwork. Your scene should incorporate the
 following elements:
-  - The SDF combination operation Smooth Blend
-  - Basic Lambertian reflection using a hard-coded light source and SDF surface normals
+  - The SDF combination operation Smooth Blend.
+  - Basic Lambertian reflection using a hard-coded light source and SDF surface normals.
   - Animation of at least one element of the scene, with at least two Toolbox Functions
   used to control the animation(s).
+  - Hard-edged shadows cast by shapes in the scene onto one another using a shadow-feeler ray.
 
 For the next assignment you will build upon this scene with procedural textures and more
 advanced lighting and reflection models, so don't worry if your scene looks a bit drab
