@@ -5,6 +5,9 @@
 - Experiment with animation curves
 
 ## Base Code
+
+Please feel free to use this code as a base (https://www.shadertoy.com/view/fsdXzM)
+
 The code we have provided for this assignment features the following:
 - A square that spans the range [-1, 1] in X and Y that is rendered with a
 shader that does not apply a projection matrix to it, thus rendering it as the
