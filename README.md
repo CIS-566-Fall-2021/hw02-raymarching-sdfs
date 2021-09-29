@@ -38,6 +38,10 @@ following elements:
   - Animation of at least one element of the scene, with at least two Toolbox Functions
   used to control the animation(s).
 
+For the next assignment you will build upon this scene with procedural textures and more
+advanced lighting and reflection models, so don't worry if your scene looks a bit drab
+given the requirements listed above.
+
 - __(10 points)__ Following the specifications listed
 [here](https://github.com/pjcozzi/Articles/blob/master/CIS565/GitHubRepo/README.md),
 create your own README.md, renaming this file to INSTRUCTIONS.md. Don't worry
