@@ -29,21 +29,14 @@ casting function by converting your ray directions to colors using the formula
 `color = 0.5 * (dir + vec3(1.0, 1.0, 1.0))`. If your screen looks like the
 following image, your rays are being cast correctly:
 ![](rayDir.png)
-- __(70 points)__ Create and animate a scene using signed distance functions.
-The subject of your scene can be anything you like, provided your scene includes
-the following elements:
-  - The SDF combination operations Intersection, Subtraction, and Smooth Blend
-  - Raymarch optimization by way of bounding volumes around SDFs, arranged in
-  a Bounding Volume Hierarchy
-  - Animation of at least two scene attributes such as color, position, scale,
-  twist, rotation, texture, or anything else you can think of
-  - At least two functions mentioned in the Toolbox Functions slides used for
-  animation
-  - Procedural texturing using toolbox functions and/or noise functions
-  - Shading that involves surface normal computation
-
-- __(10 points)__ Add GUI elements via dat.GUI that allow the user to modify at
-least two different attributes of your scene.
+- __(70 points)__ Create a scene using raymarched signed distance functions.
+The subject of your scene should be based on some reference image, such as a
+shot from a movie or a piece of artwork. Your scene should incorporate the
+following elements:
+  - The SDF combination operation Smooth Blend
+  - Basic Lambertian reflection using a hard-coded light source and SDF surface normals
+  - Animation of at least one element of the scene, with at least two Toolbox Functions
+  used to control the animation(s).
 
 - __(10 points)__ Following the specifications listed
 [here](https://github.com/pjcozzi/Articles/blob/master/CIS565/GitHubRepo/README.md),
@@ -55,9 +48,7 @@ README contains the following information:
   assignment.
   - A link to your live github.io demo (refer to the pinned Piazza post on
     how to make a live demo through github.io)
-  - An explanation of the techniques you used to generate your planet features.
-  Please be as detailed as you can; not only will this help you explain your work
-  to recruiters, but it helps us understand your project when we grade it!
+  - An explanation of the techniques you used to model and animate your scene.
 
 ## Useful Links
 - [IQ's Article on SDFs](http://www.iquilezles.org/www/articles/distfunctions/distfunctions.htm)
@@ -80,10 +71,3 @@ to make your own README!
 - [Journey Tribute](https://www.shadertoy.com/view/ldlcRf)
 - [Stormy Landscape](https://www.shadertoy.com/view/4ts3z2)
 - [Generators](https://www.shadertoy.com/view/Xtf3Rn)
-
-## Extra Credit (20 points maximum)
-- __(5 - 20 pts)__ Do some research into more advanced shading techniques such
-as ambient occlusion, soft shadows, GGX materials, depth of field, volumetrics,
-etc. and implement one of them. The more complex your feature, the more points
-you'll earn.
-- __(? pts)__ Propose an extra feature of your own!
