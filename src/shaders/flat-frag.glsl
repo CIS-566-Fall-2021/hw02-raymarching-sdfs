@@ -53,9 +53,11 @@ float sceneSDF(vec3 queryPos)
 }
 
 Ray getRay(vec2 uv)
-{
+{    
+    // Rachel's implemenation
+    /*
     Ray r;
-    
+
     vec3 look = normalize(ORIGIN - EYE);
     vec3 camera_RIGHT = normalize(cross(WORLD_UP, look));
     vec3 camera_UP = cross(camera_RIGHT, look);
@@ -67,7 +69,30 @@ Ray getRay(vec2 uv)
     
     r.origin = EYE;
     r.direction = normalize(screen_point - EYE);
-   
+
+    return r;
+    */
+
+    Ray r;
+
+    vec3 forward = u_Ref - u_Eye;
+    float len = length(forward);
+    forward = normalize(forward);
+    vec3 right = normalize(cross(forward, u_Up));
+    
+    float tanAlpha = tan(FOV / 2.0);
+    float aspectRatio = u_Dimensions.x / u_Dimensions.y;
+
+    vec3 V = u_Up * len * tanAlpha;
+    vec3 H = right * len * aspectRatio * tanAlpha;
+
+    vec3 pointOnScreen = u_Ref + uv.x * H + uv.y * V;
+
+    vec3 rayDirection = normalize(pointOnScreen - u_Eye);
+
+    r.origin = u_Eye;
+    r.direction = rayDirection;
+
     return r;
 }
 
@@ -103,9 +128,8 @@ vec3 getSceneColor(vec2 uv)
 {
     Intersection intersection = getRaymarchedIntersection(uv);
     
-    // Return ray direction as color
-    vec3 dir = intersection.position - vec3(uv, 0.0);
-    return 0.5 * (dir + vec3(1.0, 1.0, 1.0));
+    
+    //return 0.5 * (getRay(uv).direction + vec3(1.0, 1.0, 1.0));
 
     // Return scene
     if (intersection.distance_t > 0.0)
