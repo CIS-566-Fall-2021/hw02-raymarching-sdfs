@@ -102,6 +102,12 @@ Intersection getRaymarchedIntersection(vec2 uv)
 vec3 getSceneColor(vec2 uv)
 {
     Intersection intersection = getRaymarchedIntersection(uv);
+    
+    // Return ray direction as color
+    vec3 dir = intersection.position - vec3(uv, 0.0);
+    return 0.5 * (dir + vec3(1.0, 1.0, 1.0));
+
+    // Return scene
     if (intersection.distance_t > 0.0)
     { 
         return vec3(1.0);
