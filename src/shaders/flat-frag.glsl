@@ -49,7 +49,10 @@ float smin( float a, float b, float k )
 
 float sceneSDF(vec3 queryPos) 
 {
-    return sdfSphere(queryPos, vec3(0.0, 0.0, 0.0), 1.0);
+    //return sdfSphere(queryPos, vec3(0.0, 0.0, 0.0), 1.0);
+
+    return smin(sdfSphere(queryPos, vec3(0.0, 0.0, 0.0), 0.2),
+                sdfSphere(queryPos, vec3(cos(u_Time / 100.0) * 2.0, 0.0, 0.0), 0.2), 0.2);//abs(cos(u_Time / 100.0))), 0.2);
 }
 
 Ray getRay(vec2 uv)
@@ -78,7 +81,7 @@ Ray getRay(vec2 uv)
     vec3 forward = u_Ref - u_Eye;
     float len = length(forward);
     forward = normalize(forward);
-    vec3 right = normalize(cross(forward, u_Up));
+    vec3 right = normalize(cross(u_Up, forward));
     
     float tanAlpha = tan(FOV / 2.0);
     float aspectRatio = u_Dimensions.x / u_Dimensions.y;
@@ -95,6 +98,17 @@ Ray getRay(vec2 uv)
 
     return r;
 }
+
+vec3 estimateNormal(vec3 p)
+{
+    vec3 normal = vec3(0.0, 0.0, 0.0);
+    normal[0] = sceneSDF(vec3(p.x - EPSILON, p.y, p.z)) - sceneSDF(vec3(p.x + EPSILON, p.y, p.z));
+    normal[1] = sceneSDF(vec3(p.x, p.y - EPSILON, p.z)) - sceneSDF(vec3(p.x, p.y + EPSILON, p.z));
+    normal[2] = sceneSDF(vec3(p.x, p.y, p.z - EPSILON)) - sceneSDF(vec3(p.x, p.y, p.z + EPSILON));
+
+    return normalize(normal);
+}
+
 
 Intersection getRaymarchedIntersection(vec2 uv)
 {
@@ -113,7 +127,7 @@ Intersection getRaymarchedIntersection(vec2 uv)
             // We hit something
             intersection.distance_t = distancet;
             
-            //intersection.normal = estimateNormal(queryPoint);
+            intersection.normal = estimateNormal(queryPoint);
             
             return intersection;
         }
@@ -131,10 +145,9 @@ vec3 getSceneColor(vec2 uv)
     
     //return 0.5 * (getRay(uv).direction + vec3(1.0, 1.0, 1.0));
 
-    // Return scene
     if (intersection.distance_t > 0.0)
     { 
-        return vec3(1.0);
+        return intersection.normal;//vec3(1.0);
     }
     return vec3(0.0);
 }
@@ -146,6 +159,5 @@ void main()
 
     // Output to screen
     out_Col = vec4(col,1.0);
-
 }
 
