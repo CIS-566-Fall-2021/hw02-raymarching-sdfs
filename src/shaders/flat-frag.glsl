@@ -13,7 +13,7 @@ const int MAX_RAY_STEPS = 180;
 const float FOV = 45.0;
 const float EPSILON = 1e-2;
 
-const vec3 EYE = vec3(0.0, 0.0, -10.0);
+const vec3 EYE = vec3(0.0, 0.0, 10.0);
 const vec3 ORIGIN = vec3(0.0, 0.0, 0.0);
 const vec3 WORLD_UP = vec3(0.0, 1.0, 0.0);
 const vec3 WORLD_RIGHT = vec3(1.0, 0.0, 0.0);
@@ -215,6 +215,14 @@ const vec3 treePositions[6] = vec3[6](vec3(3.0, -7.0, 6.0),
                                       vec3(3.6, -7.0, 1.0)
                                       );
 const float treeRadii[6] = float[6](0.7, 0.7, 0.7, 0.7 ,0.9, 0.9);
+/*const vec3 treePositions[6] = vec3[6](vec3(-3.0, -7.0, -6.0), 
+                                      vec3(-3.1, -7.0, 6.8), 
+                                      vec3(-4.0, -7.0, 4.0), 
+                                      vec3(-4.0, -7.0, 2.0),
+                                      vec3(-3.3, -7.0, -3.0),
+                                      vec3(3.6, -7.0, 1.0)
+                                      );
+const float treeRadii[6] = float[6](0.7, 0.7, 0.7, 0.7 ,0.9, 0.9);*/
 // fake trees (distant, less detailed trees)
 const vec3 fakeTreePositions[4] = vec3[4](vec3(-1.0, 0.0, -25.0),
                                           vec3(0.7, 0.0, -18.0),
