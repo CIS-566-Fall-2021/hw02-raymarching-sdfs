@@ -200,35 +200,32 @@ float sdRoundBox( vec3 p, vec3 b, float r ){
 
 /* ----------------------- Scene definition --------------------------------- */
 
-const vec3 guideLightPos = vec3(1.3, 0.0, -6.9); // point light to represent player
+const vec3 guideLightPos = vec3(-1.6, 0.0, 6.9); // point light to represent player
 const vec3 guideLightColor = vec3(255.0, 200.0, 100.0) / 255.0;
+const vec3 skyLight = vec3(1.0);
+const vec3 skyLightPos = vec3(-3.0, 3.0, -6.0);
+const float skyLightRadius = 7.5;
 
 const vec4 skyColor = vec4(173.0, 229.0, 240.0, 255.0) / 255.0;
 const vec4 fogColor = vec4(133.0, 190.0, 220.0, 255.0) / 255.0;
 
+const vec3 templePos = vec3(-3.7, 0.0, 10.0);
+
 // forest controls
-const vec3 treePositions[6] = vec3[6](vec3(3.0, -7.0, 6.0), 
-                                      vec3(-3.1, -7.0, 6.8), 
-                                      vec3(-4.0, -7.0, 4.0), 
-                                      vec3(-4.0, -7.0, 2.0),
-                                      vec3(-3.3, -7.0, -3.0),
-                                      vec3(3.6, -7.0, 1.0)
+const vec3 treePositions[6] = vec3[6](vec3(-2.7, -7.0, -6.0), // tree right
+                                      vec3(3.6, -7.0, -6.8), 
+                                      vec3(4.1, -7.0, -4.0), 
+                                      vec3(3.9, -7.0, -1.5),
+                                      vec3(3.3, -7.0, 3.0),
+                                      vec3(-3.6, -7.0, -1.0) // tree right 2
                                       );
-const float treeRadii[6] = float[6](0.7, 0.7, 0.7, 0.7 ,0.9, 0.9);
-/*const vec3 treePositions[6] = vec3[6](vec3(-3.0, -7.0, -6.0), 
-                                      vec3(-3.1, -7.0, 6.8), 
-                                      vec3(-4.0, -7.0, 4.0), 
-                                      vec3(-4.0, -7.0, 2.0),
-                                      vec3(-3.3, -7.0, -3.0),
-                                      vec3(3.6, -7.0, 1.0)
-                                      );
-const float treeRadii[6] = float[6](0.7, 0.7, 0.7, 0.7 ,0.9, 0.9);*/
+const float treeRadii[6] = float[6](1.0, 0.7, 0.7, 0.7 ,0.9, 0.9);
 // fake trees (distant, less detailed trees)
-const vec3 fakeTreePositions[4] = vec3[4](vec3(-1.0, 0.0, -25.0),
-                                          vec3(0.7, 0.0, -18.0),
-                                          vec3(4.5, 0.0, -19.0),
-                                          vec3(-6.5, 0.0, -40.0));
-const float fakeTreeRadii[4] = float[4](0.7, 1.0, 0.8, 0.7);
+const vec3 fakeTreePositions[4] = vec3[4](vec3(-0.5, 0.0, 25.0),
+                                          vec3(-2.1, 0.0, 18.0),
+                                          vec3(-5.5, 0.0, 19.0),
+                                          vec3(5.5, 0.0, 40.0));
+const float fakeTreeRadii[4] = float[4](0.8, 1.1, 0.9, 0.8);
 // tree height constant across all trees
 const float treeHeight = 10.0;
 
@@ -250,18 +247,18 @@ float getTerrainHeight(vec2 xzCoords, out bool isPath){
 
   // hill and path controls
   float hillFreq = 4.5;
-  float hillOffset = 2.0;
-  float hillHeight = xzCoords[1] < 20.0 ? 1.0 : mix(1.0, 0.0, clamp((xzCoords[1] - 20.0) / 10.0, 0.0, 1.0));
+  float hillOffset = 2.5;
+  float hillHeight = 1.3;
 
   float waveStart = -1.5;
   float waveFreq = 2.5;
-  float waveAmp = 0.75;
+  float waveAmp = 0.78;
 
   // create hills
   float deformedHeight = hillHeight *perlinNoise2D((xzCoords / hillFreq) + hillOffset) + groundHeight;
 
   // displace path in shape of sin wave
-  float wavyPath = pathX - waveAmp*sin((xzCoords.y - waveStart) / waveFreq) + 0.3;
+  float wavyPath = pathX - waveAmp*sin((xzCoords.y - waveStart) / waveFreq) - 0.9;
   float distToPath = abs(xzCoords.x - wavyPath);
   if (distToPath < pathPaveWidth){    
     if (distToPath < pathColorWidth){
@@ -278,7 +275,7 @@ float fakeTreeSDF(vec3 queryPt, float r, vec3 treePos){
   return treeTrunk;
 }
 
-float treeSDF(vec3 queryPt, float r, vec3 treePos){
+float treeSDF(vec3 queryPt, float r){
   // tree knot controls
   float treeKnotRadius = 0.8 * r;
   float treeKnotHeight = 0.25 * treeHeight;
@@ -295,11 +292,11 @@ float treeSDF(vec3 queryPt, float r, vec3 treePos){
   vec3 treeKnotDisplacement4 = vec3(treeKnotDisplacement1.x, treeKnotDisplacement1.y, -treeKnotDisplacement1.z);
   
   // tree knot sdf definitions
-  float treeKnot1 = sdCone(queryPt + treePos + treeKnotDisplacement1, treeKnotAngles, treeKnotHeight);
-  float treeKnot2 = sdCone(queryPt + treePos + treeKnotDisplacement2, treeKnotAngles, treeKnotHeight);
-  float treeKnot3 = sdCone(queryPt + treePos + treeKnotDisplacement3, treeKnotAngles, treeKnotHeight);
-  float treeKnot4 = sdCone(queryPt + treePos + treeKnotDisplacement4, treeKnotAngles, treeKnotHeight);
-  float treeTrunk = sdCappedCylinder(queryPt + treePos, r, treeHeight);
+  float treeKnot1 = sdCone(queryPt + treeKnotDisplacement1, treeKnotAngles, treeKnotHeight);
+  float treeKnot2 = sdCone(queryPt + treeKnotDisplacement2, treeKnotAngles, treeKnotHeight);
+  float treeKnot3 = sdCone(queryPt + treeKnotDisplacement3, treeKnotAngles, treeKnotHeight);
+  float treeKnot4 = sdCone(queryPt + treeKnotDisplacement4, treeKnotAngles, treeKnotHeight);
+  float treeTrunk = sdCappedCylinder(queryPt, r, treeHeight);
   
   // smooth SDF between trunk and knots
   float res = smin(treeTrunk, treeKnot1, treeKnotSmoothFactor);
@@ -311,11 +308,12 @@ float treeSDF(vec3 queryPt, float r, vec3 treePos){
 }
 
 float forestSDF(vec3 queryPt){
-  float minSDF = treeSDF(queryPt, treeRadii[0], treePositions[0]);
-  for (int i = 1; i < treePositions.length(); i++){
+  float minSDF = 10000000.0;
+  for (int i = 0; i < treePositions.length(); i++){
     float rand = clamp(random2(vec2(i + 1, i)).x, 0.0, 1.0);
-    float slightSkew = mix(-3.0, 3.0, rand);
-    minSDF = min(minSDF, treeSDF(rotateZ(queryPt, slightSkew), treeRadii[i], treePositions[i]));
+    float slightSkew = mix(-2.0, 2.0, rand);
+    float rotY = mix(-180.0, 180.0, rand);
+    minSDF = min(minSDF, treeSDF(rotateY(rotateZ(queryPt + treePositions[i], slightSkew), rotY), treeRadii[i]));
   }
   for (int i = 0; i < fakeTreePositions.length(); i++){
     minSDF = min(minSDF, fakeTreeSDF(queryPt, fakeTreeRadii[i], fakeTreePositions[i]));
@@ -431,7 +429,7 @@ float sceneSDF(vec3 queryPt, out int material_id, out bool terminateRaymarch)
     bool isPath = false;
     terminateRaymarch = false;
     float minSDF = queryPt.y - getTerrainHeight(queryPt.xz, isPath);
-    minSDF = smin(minSDF, sdRoundBox(rotateZ(rotateY(queryPt + vec3(4.0, 1.28, -10.0), 240.0),-3.0), vec3(2.2, 0.01, 2.2), 1.0),0.8);
+    minSDF = smin(minSDF, sdRoundBox(rotateZ(rotateY(queryPt + vec3(-4.0, 1.0, 10.0), 240.0),-3.0), vec3(2.2, 0.01, 2.2), 1.0),0.9);
     material_id = isPath ? PATH_MAT_ID : GROUND_MAT_ID;
 
     // if pt - terrainHeight is negative, pt is under land, terminate early
@@ -446,7 +444,7 @@ float sceneSDF(vec3 queryPt, out int material_id, out bool terminateRaymarch)
       material_id = TREE_MAT_ID;
     }
 
-    float templeSDF = templeSDF(queryPt, vec3(3.7, 0.5, -10.0), 0.9);
+    float templeSDF = templeSDF(queryPt, templePos, 0.9);
     if (templeSDF < minSDF){
       minSDF = templeSDF;
       material_id = TEMPLE_MAT_ID;
@@ -459,8 +457,8 @@ float sceneSDF(vec3 queryPt)
 {
     bool isPath;
     float minSDF = queryPt.y - getTerrainHeight(queryPt.xz, isPath);
-    minSDF = smin(minSDF, sdRoundBox(rotateZ(rotateY(queryPt + vec3(4.0, 1.28, -10.0), 240.0),-3.0), vec3(2.2, 0.01, 2.2), 1.0),0.8);
-    minSDF = min(minSDF, templeSDF(queryPt, vec3(3.7, 0.5, -10.0), 0.9));
+    minSDF = smin(minSDF, sdRoundBox(rotateZ(rotateY(queryPt + vec3(-4.0, 1.0, 10.0), 240.0),-3.0), vec3(2.2, 0.01, 2.2), 1.0),0.9);
+    minSDF = min(minSDF, templeSDF(queryPt, templePos, 0.9));
     return min(minSDF, forestSDF(queryPt));
     
 }
@@ -509,7 +507,17 @@ Intersection getRaymarchedIntersection(vec2 uv)
 }
 
 vec4 getMaterial(vec3 n, int material_id, float zDepth, vec3 isectPt){
-  float diffuseTerm = 0.05;
+  vec3 lightVec = skyLightPos - isectPt;
+  float lengthToSkyLight = length(lightVec);
+  float diffuseTerm = 0.02;
+  float falloffDist = 5.0;
+
+  if (lengthToSkyLight < skyLightRadius + falloffDist){
+    diffuseTerm = dot(normalize(lightVec), n);
+    if (lengthToSkyLight > skyLightRadius){
+      diffuseTerm = mix(diffuseTerm, 0.02, (lengthToSkyLight - skyLightRadius) / falloffDist);
+    }
+  }
   vec4 ambientTerm = vec4(0.03, 0.07, 0.09, 0.0);
   vec3 materialCol = vec3(1.0);
 
@@ -532,20 +540,26 @@ vec4 getMaterial(vec3 n, int material_id, float zDepth, vec3 isectPt){
   float guideLightT = easeOutQuad(distToGuideLight / guideLightRadius);
   vec3 guideLightFactor = distToGuideLight < guideLightRadius ? 
                           mix(guideLightColor, vec3(0.0), guideLightT) : vec3(0.0);
-  diffuseTerm += distToGuideLight < guideLightRadius ? mix(guideLightT, 0.0, guideLightT) : 0.0;
+
+  //diffuseTerm += distToGuideLight < guideLightRadius ? mix(guideLightT, 0.0, guideLightT) : 0.0;
   vec4 lambert_color = vec4(materialCol * diffuseTerm + 2.0*guideLightFactor, 1.0) + ambientTerm;
 
-  float fogStart = -5.0;
-  float fogEnd = 19.0;
-  float fogAlphaEnd = 55.0;
+  float fogStart = 7.0;
+  float fogEnd = -15.0;
+  float fogAlphaEnd = -55.0;
 
   // apply distance fog
-  if (zDepth > fogEnd && zDepth < fogAlphaEnd){
-    return mix(fogColor, skyColor, (zDepth - fogEnd) / (fogAlphaEnd - fogEnd));
+  if (zDepth < fogEnd && zDepth > fogAlphaEnd){
+    return mix(fogColor, skyColor, abs(zDepth - fogEnd) / abs(fogAlphaEnd - fogEnd));
   }
-  if (zDepth > fogStart){
-    return mix(lambert_color, fogColor, easeOutQuad((zDepth - fogStart) / (fogEnd - fogStart)));
+  if (zDepth < fogAlphaEnd){
+    return skyColor;
   }
+  if (zDepth < fogStart){
+    vec4 blue_lambert = vec4(fogColor.rgb * diffuseTerm + 2.0*guideLightFactor, 1.0) + ambientTerm;
+    return mix(lambert_color, fogColor, easeOutQuad(abs(zDepth - fogStart) / abs(fogStart - fogEnd)));
+  }
+  
   return lambert_color;
 }
 
