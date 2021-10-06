@@ -62,7 +62,7 @@ Ray getRay(vec2 uv)
     Ray r;
 
     vec3 look = normalize(ORIGIN - EYE);
-    vec3 camera_RIGHT = normalize(cross(WORLD_UP, look));
+    vec3 camera_RIGHT = normalize(cross(forward, WORLD_UP));
     vec3 camera_UP = cross(camera_RIGHT, look);
     
     float aspect_ratio = u_Dimensions.x / u_Dimensions.y;
@@ -81,8 +81,8 @@ Ray getRay(vec2 uv)
     vec3 forward = u_Ref - u_Eye;
     float len = length(forward);
     forward = normalize(forward);
-    vec3 right = normalize(cross(u_Up, forward));
-    
+    vec3 right = normalize(cross(forward, u_Up));
+
     float tanAlpha = tan(FOV / 2.0);
     float aspectRatio = u_Dimensions.x / u_Dimensions.y;
 
@@ -102,9 +102,9 @@ Ray getRay(vec2 uv)
 vec3 estimateNormal(vec3 p)
 {
     vec3 normal = vec3(0.0, 0.0, 0.0);
-    normal[0] = sceneSDF(vec3(p.x - EPSILON, p.y, p.z)) - sceneSDF(vec3(p.x + EPSILON, p.y, p.z));
-    normal[1] = sceneSDF(vec3(p.x, p.y - EPSILON, p.z)) - sceneSDF(vec3(p.x, p.y + EPSILON, p.z));
-    normal[2] = sceneSDF(vec3(p.x, p.y, p.z - EPSILON)) - sceneSDF(vec3(p.x, p.y, p.z + EPSILON));
+    normal[0] = sceneSDF(vec3(p.x + EPSILON, p.y, p.z)) - sceneSDF(vec3(p.x - EPSILON, p.y, p.z));
+    normal[1] = sceneSDF(vec3(p.x, p.y + EPSILON, p.z)) - sceneSDF(vec3(p.x, p.y - EPSILON, p.z));
+    normal[2] = sceneSDF(vec3(p.x, p.y, p.z + EPSILON)) - sceneSDF(vec3(p.x, p.y, p.z - EPSILON));
 
     return normalize(normal);
 }
@@ -142,7 +142,8 @@ vec3 getSceneColor(vec2 uv)
 {
     Intersection intersection = getRaymarchedIntersection(uv);
     
-    
+    // Note that I flipped the camera to be at (0, 0, 3) instead of (0, 0, -10)
+    // So that we are closer to the scene and so that positive blue normals face towards camera
     //return 0.5 * (getRay(uv).direction + vec3(1.0, 1.0, 1.0));
 
     if (intersection.distance_t > 0.0)
