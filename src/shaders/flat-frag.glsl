@@ -201,6 +201,7 @@ float sceneSDF(vec3 queryPos)
         vec3 rightWheelPos = rotateAboutY(queryPos - vec3(-0.4, -1.8, -0.5), -PI / 4.0);
         float rightWheel = sdfTorus(rightWheelPos, 0.18, 0.07);
 
+        // Smooth blend the lower leg and the foot/wheel
         float rightLegAndWheel = smin(rightLowerLeg, rightWheel, 0.1);
 
         closestPointDistance = unionSDF(rightLegAndWheel, closestPointDistance);
@@ -209,14 +210,16 @@ float sceneSDF(vec3 queryPos)
         vec3 leftWheelPos = rotateAboutY(queryPos - vec3(0.9, -0.7, -0.9), -PI / 4.0);
         float leftWheel = sdfTorus(leftWheelPos, 0.18, 0.07);
 
+        // Smooth blend the lower leg and the foot/wheel
         float leftLegAndWheel = smin(leftLowerLeg, leftWheel, 0.1);
 
         closestPointDistance = unionSDF(leftLegAndWheel, closestPointDistance);
 
         // Add antenna ball
-        vec3 antennaPos = vec3(0.0, 2.3, 0.4);
-        antennaPos = rotateAboutX(antennaPos, cos(u_Time * 0.2) / 10.0 + 0.1);
-        antennaPos = rotateAboutZ(antennaPos, cos(u_Time * 0.2) / 10.0 + 0.1);
+        vec3 antennaPos = vec3(0.0, 1.0, 0.0);
+        antennaPos = rotateAboutX(antennaPos, cos(u_Time * 0.4) / 10.0 + 0.1);
+        antennaPos = rotateAboutZ(antennaPos, cos(u_Time * 0.4) / 10.0 + 0.1);
+        antennaPos += vec3(0.0, 1.3, 0.4);
         closestPointDistance = unionSDF(sdfSphere(queryPos, antennaPos, 0.1), closestPointDistance);
 
         // Add antenna
@@ -224,7 +227,6 @@ float sceneSDF(vec3 queryPos)
                                                     vec3(0.0, 1.8, 0.5), 
                                                     antennaPos, 0.01), 
                                                     closestPointDistance);
-
 
     }
 
