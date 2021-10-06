@@ -36,6 +36,13 @@ struct Intersection
     int material_id;
 };
 
+float sdBox( vec3 position, vec3 dimensions )
+{
+    vec3 d = abs(position) - dimensions;
+    return min(max(d.x,max(d.y,d.z)),0.0) + length(max(d,0.0));
+}
+
+
 float sdfSphere(vec3 query_position, vec3 position, float radius)
 {
     return length(query_position - position) - radius;
@@ -49,7 +56,9 @@ float smin( float a, float b, float k )
 
 float sceneSDF(vec3 queryPos) 
 {
-    //return sdfSphere(queryPos, vec3(0.0, 0.0, 0.0), 1.0);
+    return sdBox(queryPos, vec3(0.5, 0.5, 0.5));
+
+    return sdfSphere(queryPos, vec3(0.0, 0.0, 0.0), 0.2);
 
     return smin(sdfSphere(queryPos, vec3(0.0, 0.0, 0.0), 0.2),
                 sdfSphere(queryPos, vec3(cos(u_Time / 100.0) * 2.0, 0.0, 0.0), 0.2), 0.2);//abs(cos(u_Time / 100.0))), 0.2);
