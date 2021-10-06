@@ -213,8 +213,20 @@ float sceneSDF(vec3 queryPos)
 
         closestPointDistance = unionSDF(leftLegAndWheel, closestPointDistance);
 
-    }
+        // Add antenna ball
+        vec3 antennaPos = vec3(0.0, 2.3, 0.4);
+        antennaPos = rotateAboutX(antennaPos, cos(u_Time * 0.2) / 10.0 + 0.1);
+        antennaPos = rotateAboutZ(antennaPos, cos(u_Time * 0.2) / 10.0 + 0.1);
+        closestPointDistance = unionSDF(sdfSphere(queryPos, antennaPos, 0.1), closestPointDistance);
 
+        // Add antenna
+        closestPointDistance = unionSDF(sdfCapsule(queryPos, 
+                                                    vec3(0.0, 1.8, 0.5), 
+                                                    antennaPos, 0.01), 
+                                                    closestPointDistance);
+
+
+    }
 
     return closestPointDistance;
 
