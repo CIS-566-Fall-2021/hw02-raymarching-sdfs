@@ -124,7 +124,7 @@ float sdfCapsule( vec3 point, vec3 pointA, vec3 pointB, float radius )
 
 float sdfTorus( vec3 point, float radius, float thickness)
 {
-    return length(vec2(length(point.yz)- radius, point.x)) - thickness;
+    return length(vec2(length(point.xy)- radius, point.z)) - thickness;
 }
 
 
@@ -148,20 +148,64 @@ float sceneSDF(vec3 queryPos)
         closestPointDistance = unionSDF(sdfSphere(queryPos, vec3(0.0, 1.3, 0.3), 0.6), closestPointDistance);
 
         // Add right upper arm
-        closestPointDistance = unionSDF(sdfCapsule(queryPos - vec3(-0.8, -0.4, -0.4), vec3(-0.6, 0.3, 0.1), vec3(0.2, 0.8, 0.2), 0.1), closestPointDistance);
+        closestPointDistance = unionSDF(sdfCapsule(queryPos - vec3(-0.8, -0.4, -0.4), 
+                                                    vec3(-0.6, 0.3, 0.1), 
+                                                    vec3(0.2, 0.8, 0.2), 0.1), 
+                                                    closestPointDistance);
 
         // Add right lower arm
-        closestPointDistance = unionSDF(sdfCapsule(queryPos - vec3(-0.8, -0.4, -0.4), vec3(-0.6, 0.3, 0.1), vec3(-0.9, 0.3, 0.9), 0.1), closestPointDistance);
+        closestPointDistance = unionSDF(sdfCapsule(queryPos - vec3(-0.8, -0.4, -0.4), 
+                                                    vec3(-0.6, 0.3, 0.1), 
+                                                    vec3(-0.9, 0.3, 0.9), 0.1), 
+                                                    closestPointDistance);
 
 
         // Upper left arm
-        closestPointDistance = unionSDF(sdfCapsule(queryPos - vec3(0.8, 0.0, 0.2), vec3(-0.4, 0.3, 0.3), vec3(0.6, 0.2, -0.4), 0.1), closestPointDistance);
+        closestPointDistance = unionSDF(sdfCapsule(queryPos - vec3(0.8, 0.0, 0.2), 
+                                                    vec3(-0.4, 0.3, 0.3), 
+                                                    vec3(0.6, 0.2, -0.4), 0.1), 
+                                                    closestPointDistance);
 
         // Lower left arm
-        closestPointDistance = unionSDF(sdfCapsule(queryPos - vec3(0.8, -0.6, 0.2), vec3(0.4, 0.0, 0.5), vec3(0.6, 0.8, -0.4), 0.1), closestPointDistance);
+        closestPointDistance = unionSDF(sdfCapsule(queryPos - vec3(0.8, -0.6, 0.2), 
+                                                vec3(0.4, 0.0, 0.5), 
+                                                  vec3(0.6, 0.8, -0.4), 0.1), 
+                                                  closestPointDistance);
+
+
+        // Add right upper leg
+        closestPointDistance = unionSDF(sdfCapsule(queryPos - vec3(-0.8, -1.4, -0.4), 
+                                                    vec3(0.2, 0.4, 0.1), 
+                                                    vec3(0.6, 1.0, -0.2), 0.1), 
+                                                    closestPointDistance);
+
+        // Add right lower leg
+        closestPointDistance = unionSDF(sdfCapsule(queryPos - vec3(-0.8, -1.4, -0.4), 
+                                                    vec3(0.2, 0.4, 0.1), 
+                                                    vec3(0.38, -0.2, -0.1), 0.1), 
+                                                    closestPointDistance);
+
+
+        // Add left upper leg
+        closestPointDistance = unionSDF(sdfCapsule(queryPos - vec3(-0.4, -1.6, 0.1), 
+                                                    vec3(0.8, 0.7, -0.4), 
+                                                    vec3(0.6, 1.0, 0.0), 0.1), 
+                                                    closestPointDistance);
+
+        // Add left lower leg
+        closestPointDistance = unionSDF(sdfCapsule(queryPos - vec3(-0.4, -1.6, 0.1), 
+                                                    vec3(0.8, 0.7, -0.4), 
+                                                    vec3(1.2, 0.85, -0.9), 0.1), 
+                                                    closestPointDistance);
+
 
         // Right wheel
-        closestPointDistance = unionSDF(sdfTorus(queryPos - vec3(0.0, 0.0, 0.0), 1.0, 0.3), closestPointDistance);
+        vec3 rightWheelPos = rotateAboutY(queryPos - vec3(-0.4, -1.8, -0.5), -PI / 4.0);
+        closestPointDistance = unionSDF(sdfTorus(rightWheelPos, 0.18, 0.07), closestPointDistance);
+
+        // Left wheel
+        vec3 leftWheelPos = rotateAboutY(queryPos - vec3(0.9, -0.7, -0.9), -PI / 4.0);
+        closestPointDistance = unionSDF(sdfTorus(leftWheelPos, 0.18, 0.07), closestPointDistance);
 
     }
 
