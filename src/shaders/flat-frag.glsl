@@ -65,8 +65,8 @@ float unionSDF(float distance1, float distance2)
 // Describe the scene using sdf functions
 float sceneSDF(vec3 queryPos) 
 {
-    return unionSDF(sdfBox(queryPos, vec3(0.5, 0.5, 0.5)),
-                    sdfSphere(queryPos, vec3(0.0, 0.0, 0.0), 0.7));
+    return unionSDF(sdfBox(queryPos - vec3(0.0, 0.0, 0.0), vec3(0.5, 0.5, 0.5)),
+                    sdfSphere(queryPos, vec3(0.0, 1.3, 0.0), 0.6));
 
     return sdfSphere(queryPos, vec3(0.0, 0.0, 0.0), 0.2);
 
