@@ -19,7 +19,7 @@ const vec3 ORIGIN = vec3(0.0, 0.0, 0.0);
 const vec3 WORLD_UP = vec3(0.0, 1.0, 0.0);
 const vec3 WORLD_RIGHT = vec3(1.0, 0.0, 0.0);
 const vec3 WORLD_FORWARD = vec3(0.0, 0.0, 1.0);
-const vec3 LIGHT_DIR = vec3(-1.0, -1.0, -2.0);
+const vec3 LIGHT_DIR = vec3(-1.0, 1.0, 2.0);
 
 
 struct Ray 
@@ -37,17 +37,26 @@ struct Intersection
     int material_id;
 };
 
+
+// Creates a box with dimensions dimensions
 float sdfBox( vec3 position, vec3 dimensions )
 {
     vec3 d = abs(position) - dimensions;
     return min(max(d.x,max(d.y,d.z)),0.0) + length(max(d,0.0));
 }
 
-
+// Creates a sphere
 float sdfSphere(vec3 query_position, vec3 position, float radius)
 {
     return length(query_position - position) - radius;
 }
+
+// Creates a plane
+float heightField(vec3 queryPos, float planeHeight)
+{
+    return queryPos.y - planeHeight;
+}
+
 
 float smin( float a, float b, float k )
 {
@@ -65,13 +74,21 @@ float unionSDF(float distance1, float distance2)
 // Describe the scene using sdf functions
 float sceneSDF(vec3 queryPos) 
 {
-    return unionSDF(sdfBox(queryPos - vec3(0.0, 0.0, 0.0), vec3(0.5, 0.5, 0.5)),
-                    sdfSphere(queryPos, vec3(0.0, 1.3, 0.0), 0.6));
+    // Add floor
+    float closestPointDistance = heightField(queryPos, -1.0);
 
-    return sdfSphere(queryPos, vec3(0.0, 0.0, 0.0), 0.2);
+    // Add body
+    closestPointDistance = unionSDF(sdfBox(queryPos - vec3(0.0, 0.0, 0.0), vec3(0.5, 0.5, 0.5)), closestPointDistance);
+    
+    // Add head
+    closestPointDistance = unionSDF(sdfSphere(queryPos, vec3(0.0, 1.3, 0.0), 0.6), closestPointDistance);
 
+    return closestPointDistance;
+
+    /*
     return smin(sdfSphere(queryPos, vec3(0.0, 0.0, 0.0), 0.2),
                 sdfSphere(queryPos, vec3(cos(u_Time / 100.0) * 2.0, 0.0, 0.0), 0.2), 0.2);//abs(cos(u_Time / 100.0))), 0.2);
+    */
 }
 
 Ray getRay(vec2 uv)
@@ -139,7 +156,9 @@ Intersection getRaymarchedIntersection(vec2 uv)
     Ray r = getRay(uv);
     for(int step; step < MAX_RAY_STEPS; ++step)
     {
+        
         vec3 queryPoint = r.origin + r.direction * distancet;
+        
         float currentDistance = sceneSDF(queryPoint);
         if(currentDistance < EPSILON)
         {
@@ -167,7 +186,24 @@ vec3 getSceneColor(vec2 uv)
 
     if (intersection.distance_t > 0.0)
     { 
-        return intersection.normal;//vec3(1.0);
+        //return intersection.normal;//vec3(1.0);
+
+        // Material base color
+        vec3 diffuseColor = vec3(0.7, 0.4, 0.3);
+
+        // Lambert shading
+        // Calculate the diffuse term
+        float diffuseTerm = dot(normalize(intersection.normal), normalize(LIGHT_DIR));
+        
+        diffuseTerm = clamp(diffuseTerm, 0.0f, 1.0f);
+
+        float ambientTerm = 0.1;
+
+        float lightIntensity = diffuseTerm + ambientTerm;  
+
+        // Compute final shaded color
+        return diffuseColor * lightIntensity;
+
     }
     return vec3(0.0);
 }
