@@ -180,10 +180,9 @@ float sceneSDF(vec3 queryPos)
                                                     closestPointDistance);
 
         // Add right lower leg
-        closestPointDistance = unionSDF(sdfCapsule(queryPos - vec3(-0.8, -1.4, -0.4), 
+        float rightLowerLeg = sdfCapsule(queryPos - vec3(-0.8, -1.4, -0.4), 
                                                     vec3(0.2, 0.4, 0.1), 
-                                                    vec3(0.38, -0.2, -0.1), 0.1), 
-                                                    closestPointDistance);
+                                                    vec3(0.38, -0.2, -0.1), 0.1);
 
 
         // Add left upper leg
@@ -193,19 +192,26 @@ float sceneSDF(vec3 queryPos)
                                                     closestPointDistance);
 
         // Add left lower leg
-        closestPointDistance = unionSDF(sdfCapsule(queryPos - vec3(-0.4, -1.6, 0.1), 
+        float leftLowerLeg = sdfCapsule(queryPos - vec3(-0.4, -1.6, 0.1), 
                                                     vec3(0.8, 0.7, -0.4), 
-                                                    vec3(1.2, 0.85, -0.9), 0.1), 
-                                                    closestPointDistance);
+                                                    vec3(1.2, 0.85, -0.9), 0.1);
 
 
         // Right wheel
         vec3 rightWheelPos = rotateAboutY(queryPos - vec3(-0.4, -1.8, -0.5), -PI / 4.0);
-        closestPointDistance = unionSDF(sdfTorus(rightWheelPos, 0.18, 0.07), closestPointDistance);
+        float rightWheel = sdfTorus(rightWheelPos, 0.18, 0.07);
+
+        float rightLegAndWheel = smin(rightLowerLeg, rightWheel, 0.1);
+
+        closestPointDistance = unionSDF(rightLegAndWheel, closestPointDistance);
 
         // Left wheel
         vec3 leftWheelPos = rotateAboutY(queryPos - vec3(0.9, -0.7, -0.9), -PI / 4.0);
-        closestPointDistance = unionSDF(sdfTorus(leftWheelPos, 0.18, 0.07), closestPointDistance);
+        float leftWheel = sdfTorus(leftWheelPos, 0.18, 0.07);
+
+        float leftLegAndWheel = smin(leftLowerLeg, leftWheel, 0.1);
+
+        closestPointDistance = unionSDF(leftLegAndWheel, closestPointDistance);
 
     }
 
