@@ -8,10 +8,11 @@ uniform float u_Time;
 in vec2 fs_Pos;
 out vec4 out_Col;
 
-
 const int MAX_RAY_STEPS = 128;
 const float FOV = 45.0;
 const float EPSILON = 1e-6;
+
+const float FAR_CLIP = 1e10;
 
 const vec3 EYE = vec3(0.0, 0.0, -10.0);
 const vec3 ORIGIN = vec3(0.0, 0.0, 0.0);
@@ -36,7 +37,7 @@ struct Intersection
     int material_id;
 };
 
-float sdBox( vec3 position, vec3 dimensions )
+float sdfBox( vec3 position, vec3 dimensions )
 {
     vec3 d = abs(position) - dimensions;
     return min(max(d.x,max(d.y,d.z)),0.0) + length(max(d,0.0));
@@ -54,9 +55,18 @@ float smin( float a, float b, float k )
     return mix( b, a, h ) - k*h*(1.0-h);
 }
 
+
+float unionSDF(float distance1, float distance2)
+{
+    return min(distance1, distance2);
+}
+
+
+// Describe the scene using sdf functions
 float sceneSDF(vec3 queryPos) 
 {
-    return sdBox(queryPos, vec3(0.5, 0.5, 0.5));
+    return unionSDF(sdfBox(queryPos, vec3(0.5, 0.5, 0.5)),
+                    sdfSphere(queryPos, vec3(0.0, 0.0, 0.0), 0.7));
 
     return sdfSphere(queryPos, vec3(0.0, 0.0, 0.0), 0.2);
 
