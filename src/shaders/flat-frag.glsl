@@ -139,8 +139,19 @@ float sceneSDF(vec3 queryPos)
     // Add head
     closestPointDistance = unionSDF(sdfSphere(queryPos, vec3(0.0, 1.3, 0.3), 0.6), closestPointDistance);
 
-    // Add arm
-    closestPointDistance = unionSDF(sdfCapsule(queryPos + vec3(1.0, 0.0, 0.0), vec3(-0.1,0.1,-0.1), vec3(0.2,0.8,0.2), 0.2), closestPointDistance);
+    // Add right upper arm
+    closestPointDistance = unionSDF(sdfCapsule(queryPos - vec3(-0.8, -0.4, -0.4), vec3(-0.6, 0.3, 0.1), vec3(0.2, 0.8, 0.2), 0.1), closestPointDistance);
+
+    // Add right lower arm
+    closestPointDistance = unionSDF(sdfCapsule(queryPos - vec3(-0.8, -0.4, -0.4), vec3(-0.6, 0.3, 0.1), vec3(-0.9, 0.3, 0.9), 0.1), closestPointDistance);
+
+
+    // Upper left arm
+    closestPointDistance = unionSDF(sdfCapsule(queryPos - vec3(0.8, 0.0, 0.2), vec3(-0.4, 0.3, 0.3), vec3(0.6, 0.2, -0.4), 0.1), closestPointDistance);
+
+    // Lower left arm
+    closestPointDistance = unionSDF(sdfCapsule(queryPos - vec3(0.8, -0.6, 0.2), vec3(0.4, 0.0, 0.5), vec3(0.6, 0.8, -0.4), 0.1), closestPointDistance);
+
 
     return closestPointDistance;
 
