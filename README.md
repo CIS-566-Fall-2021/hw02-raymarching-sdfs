@@ -2,7 +2,9 @@
 
 ## Nathan Devlin - ndevlin@seas.upenn.edu - www.ndevlin.com
 
-![](rayDir.png)
+Reference Image:
+
+![](Reference.jpeg)
 
 ## Live Demo
 View a live WebGL Demo here!:

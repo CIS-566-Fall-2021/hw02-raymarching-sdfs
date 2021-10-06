@@ -215,6 +215,7 @@ float sceneSDF(vec3 queryPos)
 
     }
 
+
     return closestPointDistance;
 
     /*
