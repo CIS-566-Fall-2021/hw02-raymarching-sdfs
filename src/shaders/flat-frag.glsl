@@ -113,6 +113,15 @@ float heightField(vec3 queryPos, float planeHeight)
     return queryPos.y - planeHeight;
 }
 
+float sdfCapsule( vec3 point, vec3 pointA, vec3 pointB, float radius )
+{
+	vec3 pa = point - pointA;
+    vec3 ba = pointB - pointA;
+	float h = clamp( dot(pa, ba) / dot(ba, ba), 0.0, 1.0 );
+	return length( pa - ba * h ) - radius;
+}
+
+
 
 // Describe the scene using sdf functions
 float sceneSDF(vec3 queryPos) 
@@ -129,6 +138,9 @@ float sceneSDF(vec3 queryPos)
     
     // Add head
     closestPointDistance = unionSDF(sdfSphere(queryPos, vec3(0.0, 1.3, 0.3), 0.6), closestPointDistance);
+
+    // Add arm
+    closestPointDistance = unionSDF(sdfCapsule(queryPos + vec3(1.0, 0.0, 0.0), vec3(-0.1,0.1,-0.1), vec3(0.2,0.8,0.2), 0.2), closestPointDistance);
 
     return closestPointDistance;
 
