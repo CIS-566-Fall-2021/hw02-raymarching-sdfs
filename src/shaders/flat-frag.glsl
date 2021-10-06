@@ -12,6 +12,8 @@ const int MAX_RAY_STEPS = 128;
 const float FOV = 45.0;
 const float EPSILON = 1e-6;
 
+const float PI = 3.14159265359;
+
 const float FAR_CLIP = 1e10;
 
 const float AMBIENT = 0.2;
@@ -40,6 +42,58 @@ struct Intersection
 };
 
 
+// Operation functions
+
+float smin( float a, float b, float k )
+{
+    float h = clamp( 0.5+0.5*(b-a)/k, 0.0, 1.0 );
+    return mix( b, a, h ) - k*h*(1.0-h);
+}
+
+
+vec3 rotateAboutX(vec3 point, float theta)
+{
+    float cosTheta = cos(theta);
+    float sinTheta = sin(theta);
+    point.yz = mat2(cosTheta, -sinTheta, sinTheta, cosTheta) * point.yz;
+    return point;
+}
+
+
+vec3 rotateAboutY(vec3 point, float theta)
+{
+    float cosTheta = cos(theta);
+    float sinTheta = sin(theta);
+    point.xz = mat2(cosTheta, -sinTheta, sinTheta, cosTheta) * point.xz;
+    return point;
+}
+
+vec3 rotateAboutZ(vec3 point, float theta)
+{
+    float cosTheta = cos(theta);
+    float sinTheta = sin(theta);
+    point.xy = mat2(cosTheta, -sinTheta, sinTheta, cosTheta) * point.xy;
+    return point;
+}
+
+
+vec3 rotateXYZ(vec3 point, float thetaX, float thetaY, float thetaZ)
+{
+    point = rotateAboutX(point, thetaX);
+    point = rotateAboutY(point, thetaY);
+    point = rotateAboutZ(point, thetaZ);
+
+    return point;
+}
+
+
+float unionSDF(float distance1, float distance2)
+{
+    return min(distance1, distance2);
+}
+
+// SDF primitives
+
 // Creates a box with dimensions dimensions
 float sdfBox( vec3 position, vec3 dimensions )
 {
@@ -60,30 +114,21 @@ float heightField(vec3 queryPos, float planeHeight)
 }
 
 
-float smin( float a, float b, float k )
-{
-    float h = clamp( 0.5+0.5*(b-a)/k, 0.0, 1.0 );
-    return mix( b, a, h ) - k*h*(1.0-h);
-}
-
-
-float unionSDF(float distance1, float distance2)
-{
-    return min(distance1, distance2);
-}
-
-
 // Describe the scene using sdf functions
 float sceneSDF(vec3 queryPos) 
 {
+    float closestPointDistance = 1e10;
+
     // Add floor
-    float closestPointDistance = heightField(queryPos, -1.0);
+    closestPointDistance = unionSDF(heightField(queryPos, -1.0), closestPointDistance);
 
     // Add body
-    closestPointDistance = unionSDF(sdfBox(queryPos - vec3(0.0, 0.0, 0.0), vec3(0.5, 0.5, 0.5)), closestPointDistance);
+    vec3 bodyPos = rotateXYZ(queryPos, PI / 10.0,  PI / 4.0, 0.0);
+    float cube = sdfBox(bodyPos, vec3(0.5, 0.5, 0.5));
+    closestPointDistance = unionSDF(cube, closestPointDistance);
     
     // Add head
-    closestPointDistance = unionSDF(sdfSphere(queryPos, vec3(0.0, 1.3, 1.5), 0.6), closestPointDistance);
+    closestPointDistance = unionSDF(sdfSphere(queryPos, vec3(0.0, 1.3, 0.3), 0.6), closestPointDistance);
 
     return closestPointDistance;
 
