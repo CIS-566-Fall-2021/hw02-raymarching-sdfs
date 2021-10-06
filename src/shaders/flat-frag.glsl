@@ -81,7 +81,7 @@ float sceneSDF(vec3 queryPos)
     closestPointDistance = unionSDF(sdfBox(queryPos - vec3(0.0, 0.0, 0.0), vec3(0.5, 0.5, 0.5)), closestPointDistance);
     
     // Add head
-    closestPointDistance = unionSDF(sdfSphere(queryPos, vec3(0.0, 1.3, 0.0), 0.6), closestPointDistance);
+    closestPointDistance = unionSDF(sdfSphere(queryPos, vec3(0.0, 1.3, 1.5), 0.6), closestPointDistance);
 
     return closestPointDistance;
 
@@ -146,6 +146,22 @@ vec3 estimateNormal(vec3 p)
 }
 
 
+float hardShadow(vec3 rayOrigin, vec3 rayDirection, float minT, float maxT)
+{
+    for(float t = minT; t < maxT; )
+    {
+        float h = sceneSDF(rayOrigin + rayDirection * t);
+        if(h < EPSILON)
+        {
+            return 0.3;
+        }
+        t += h;
+    }
+
+    return 1.0;
+}
+
+
 Intersection getRaymarchedIntersection(vec2 uv)
 {
     Intersection intersection;    
@@ -166,6 +182,8 @@ Intersection getRaymarchedIntersection(vec2 uv)
             intersection.distance_t = distancet;
             
             intersection.normal = estimateNormal(queryPoint);
+
+            intersection.position = queryPoint;
             
             return intersection;
         }
@@ -201,8 +219,15 @@ vec3 getSceneColor(vec2 uv)
 
         float lightIntensity = diffuseTerm + ambientTerm;  
 
-        // Compute final shaded color
-        return diffuseColor * lightIntensity;
+        // Compute lambert color
+        vec3 lambertColor = diffuseColor * lightIntensity;
+
+        // Compute shadow
+        float shadowFactor = hardShadow(intersection.position, normalize(LIGHT_DIR), EPSILON * 100.0, 10.0);
+        
+        vec3 colorMinusShadowing = shadowFactor * lambertColor;
+
+        return colorMinusShadowing;
 
     }
     return vec3(0.0);
