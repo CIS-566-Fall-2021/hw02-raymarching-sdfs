@@ -14,6 +14,8 @@ const float EPSILON = 1e-6;
 
 const float FAR_CLIP = 1e10;
 
+const float AMBIENT = 0.2;
+
 const vec3 EYE = vec3(0.0, 0.0, -10.0);
 const vec3 ORIGIN = vec3(0.0, 0.0, 0.0);
 const vec3 WORLD_UP = vec3(0.0, 1.0, 0.0);
@@ -153,12 +155,30 @@ float hardShadow(vec3 rayOrigin, vec3 rayDirection, float minT, float maxT)
         float h = sceneSDF(rayOrigin + rayDirection * t);
         if(h < EPSILON)
         {
-            return 0.3;
+            return 0.0;
         }
         t += h;
     }
 
     return 1.0;
+}
+
+
+float softShadow(vec3 rayOrigin, vec3 rayDirection, float minT, float maxT, float k)
+{
+    float result = 1.0;
+    for(float t = minT; t < maxT; )
+    {
+        float h = sceneSDF(rayOrigin + rayDirection * t);
+        if(h < EPSILON)
+        {
+            return 0.0;
+        }
+        result = min(result, k * h / t);
+        t += h;
+    }
+
+    return result;
 }
 
 
@@ -215,9 +235,7 @@ vec3 getSceneColor(vec2 uv)
         
         diffuseTerm = clamp(diffuseTerm, 0.0f, 1.0f);
 
-        float ambientTerm = 0.1;
-
-        float lightIntensity = diffuseTerm + ambientTerm;  
+        float lightIntensity = diffuseTerm;  
 
         // Compute lambert color
         vec3 lambertColor = diffuseColor * lightIntensity;
@@ -225,7 +243,7 @@ vec3 getSceneColor(vec2 uv)
         // Compute shadow
         float shadowFactor = hardShadow(intersection.position, normalize(LIGHT_DIR), EPSILON * 100.0, 10.0);
         
-        vec3 colorMinusShadowing = shadowFactor * lambertColor;
+        vec3 colorMinusShadowing = (shadowFactor + AMBIENT) * lambertColor;
 
         return colorMinusShadowing;
 
