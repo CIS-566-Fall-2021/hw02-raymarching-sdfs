@@ -80,7 +80,7 @@ function main() {
   function tick() {
     camera.update();
     stats.begin();
-    gl.viewport(0, 0, window.innerWidth, window.innerHeight);
+    gl.viewport(0, 0, canvas.width, canvas.height);
     renderer.clear();
     processKeyPresses();
     renderer.render(camera, flat, [
@@ -93,17 +93,22 @@ function main() {
     requestAnimationFrame(tick);
   }
 
+  const resDiv: number = 2;
   window.addEventListener('resize', function() {
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    camera.setAspectRatio(window.innerWidth / window.innerHeight);
+    let width: number = window.innerWidth / resDiv;
+    let height: number = window.innerHeight / resDiv;
+    renderer.setSize(width, height);
+    camera.setAspectRatio(width / height);
     camera.updateProjectionMatrix();
-    flat.setDimensions(window.innerWidth, window.innerHeight);
+    flat.setDimensions(width, height);
   }, false);
 
-  renderer.setSize(window.innerWidth, window.innerHeight);
-  camera.setAspectRatio(window.innerWidth / window.innerHeight);
+  let width: number = window.innerWidth / resDiv;
+  let height: number = window.innerHeight / resDiv;
+  renderer.setSize(width, height);
+  camera.setAspectRatio(width / height);
   camera.updateProjectionMatrix();
-  flat.setDimensions(window.innerWidth, window.innerHeight);
+  flat.setDimensions(width, height);
 
   // Start the render loop
   tick();
