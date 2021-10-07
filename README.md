@@ -16,7 +16,7 @@ https://ndevlin.github.io/hw02-raymarching-sdfs/
 
 ## Project Description
 
-This project uses Signed Distance Functions (as opposed to explicit geometry) to define a scene. Raysmarching is used to determine pixel colors. The project uses WebGL and was coded with TypeScript and GLSL in Visual Studio Code.
+This project uses Signed Distance Functions (as opposed to explicit geometry) to define a scene. Ray marching is used to determine pixel colors. The project uses WebGL and was coded with TypeScript and GLSL in Visual Studio Code.
 
 ## Implementation Details
 
