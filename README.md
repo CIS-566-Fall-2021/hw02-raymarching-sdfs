@@ -1,5 +1,17 @@
 # CIS 566 Homework 2: Implicit Surfaces
 
+Name: Eddie Huang
+
+PennKey: huanged
+
+Part 1:
+![]Normals.png
+
+Part 2:
+![]Pic1.png
+![]Pic2.png
+
+
 ## Objective
 - Gain experience with signed distance functions
 - Experiment with animation curves
