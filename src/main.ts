@@ -20,7 +20,7 @@ let time: number = 0;
 function loadScene() {
   square = new Square(vec3.fromValues(0, 0, 0));
   square.create();
-  // time = 0;
+  time = 0;
 }
 
 function main() {

@@ -1810,9 +1810,13 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   "fromRotationTranslationScaleOrigin": () => (/* binding */ fromRotationTranslationScaleOrigin),
 /* harmony export */   "fromQuat": () => (/* binding */ fromQuat),
 /* harmony export */   "frustum": () => (/* binding */ frustum),
+/* harmony export */   "perspectiveNO": () => (/* binding */ perspectiveNO),
 /* harmony export */   "perspective": () => (/* binding */ perspective),
+/* harmony export */   "perspectiveZO": () => (/* binding */ perspectiveZO),
 /* harmony export */   "perspectiveFromFieldOfView": () => (/* binding */ perspectiveFromFieldOfView),
+/* harmony export */   "orthoNO": () => (/* binding */ orthoNO),
 /* harmony export */   "ortho": () => (/* binding */ ortho),
+/* harmony export */   "orthoZO": () => (/* binding */ orthoZO),
 /* harmony export */   "lookAt": () => (/* binding */ lookAt),
 /* harmony export */   "targetTo": () => (/* binding */ targetTo),
 /* harmony export */   "str": () => (/* binding */ str),
@@ -3188,6 +3192,8 @@ function frustum(out, left, right, bottom, top, near, far) {
 }
 /**
  * Generates a perspective projection matrix with the given bounds.
+ * The near/far clip planes correspond to a normalized device coordinate Z range of [-1, 1],
+ * which matches WebGL/OpenGL's clip volume.
  * Passing null/undefined/no value for far will generate infinite projection matrix.
  *
  * @param {mat4} out mat4 frustum matrix will be written into
@@ -3198,7 +3204,7 @@ function frustum(out, left, right, bottom, top, near, far) {
  * @returns {mat4} out
  */
 
-function perspective(out, fovy, aspect, near, far) {
+function perspectiveNO(out, fovy, aspect, near, far) {
   var f = 1.0 / Math.tan(fovy / 2),
       nf;
   out[0] = f / aspect;
@@ -3223,6 +3229,55 @@ function perspective(out, fovy, aspect, near, far) {
   } else {
     out[10] = -1;
     out[14] = -2 * near;
+  }
+
+  return out;
+}
+/**
+ * Alias for {@link mat4.perspectiveNO}
+ * @function
+ */
+
+var perspective = perspectiveNO;
+/**
+ * Generates a perspective projection matrix suitable for WebGPU with the given bounds.
+ * The near/far clip planes correspond to a normalized device coordinate Z range of [0, 1],
+ * which matches WebGPU/Vulkan/DirectX/Metal's clip volume.
+ * Passing null/undefined/no value for far will generate infinite projection matrix.
+ *
+ * @param {mat4} out mat4 frustum matrix will be written into
+ * @param {number} fovy Vertical field of view in radians
+ * @param {number} aspect Aspect ratio. typically viewport width/height
+ * @param {number} near Near bound of the frustum
+ * @param {number} far Far bound of the frustum, can be null or Infinity
+ * @returns {mat4} out
+ */
+
+function perspectiveZO(out, fovy, aspect, near, far) {
+  var f = 1.0 / Math.tan(fovy / 2),
+      nf;
+  out[0] = f / aspect;
+  out[1] = 0;
+  out[2] = 0;
+  out[3] = 0;
+  out[4] = 0;
+  out[5] = f;
+  out[6] = 0;
+  out[7] = 0;
+  out[8] = 0;
+  out[9] = 0;
+  out[11] = -1;
+  out[12] = 0;
+  out[13] = 0;
+  out[15] = 0;
+
+  if (far != null && far !== Infinity) {
+    nf = 1 / (near - far);
+    out[10] = far * nf;
+    out[14] = far * near * nf;
+  } else {
+    out[10] = -1;
+    out[14] = -near;
   }
 
   return out;
@@ -3265,7 +3320,9 @@ function perspectiveFromFieldOfView(out, fov, near, far) {
   return out;
 }
 /**
- * Generates a orthogonal projection matrix with the given bounds
+ * Generates a orthogonal projection matrix with the given bounds.
+ * The near/far clip planes correspond to a normalized device coordinate Z range of [-1, 1],
+ * which matches WebGL/OpenGL's clip volume.
  *
  * @param {mat4} out mat4 frustum matrix will be written into
  * @param {number} left Left bound of the frustum
@@ -3277,7 +3334,7 @@ function perspectiveFromFieldOfView(out, fov, near, far) {
  * @returns {mat4} out
  */
 
-function ortho(out, left, right, bottom, top, near, far) {
+function orthoNO(out, left, right, bottom, top, near, far) {
   var lr = 1 / (left - right);
   var bt = 1 / (bottom - top);
   var nf = 1 / (near - far);
@@ -3296,6 +3353,49 @@ function ortho(out, left, right, bottom, top, near, far) {
   out[12] = (left + right) * lr;
   out[13] = (top + bottom) * bt;
   out[14] = (far + near) * nf;
+  out[15] = 1;
+  return out;
+}
+/**
+ * Alias for {@link mat4.orthoNO}
+ * @function
+ */
+
+var ortho = orthoNO;
+/**
+ * Generates a orthogonal projection matrix with the given bounds.
+ * The near/far clip planes correspond to a normalized device coordinate Z range of [0, 1],
+ * which matches WebGPU/Vulkan/DirectX/Metal's clip volume.
+ *
+ * @param {mat4} out mat4 frustum matrix will be written into
+ * @param {number} left Left bound of the frustum
+ * @param {number} right Right bound of the frustum
+ * @param {number} bottom Bottom bound of the frustum
+ * @param {number} top Top bound of the frustum
+ * @param {number} near Near bound of the frustum
+ * @param {number} far Far bound of the frustum
+ * @returns {mat4} out
+ */
+
+function orthoZO(out, left, right, bottom, top, near, far) {
+  var lr = 1 / (left - right);
+  var bt = 1 / (bottom - top);
+  var nf = 1 / (near - far);
+  out[0] = -2 * lr;
+  out[1] = 0;
+  out[2] = 0;
+  out[3] = 0;
+  out[4] = 0;
+  out[5] = -2 * bt;
+  out[6] = 0;
+  out[7] = 0;
+  out[8] = 0;
+  out[9] = 0;
+  out[10] = nf;
+  out[11] = 0;
+  out[12] = (left + right) * lr;
+  out[13] = (top + bottom) * bt;
+  out[14] = near * nf;
   out[15] = 1;
   return out;
 }
@@ -6869,17 +6969,6 @@ module.exports =
 
 /***/ }),
 
-/***/ "./node_modules/stats-js/build/stats.min.js":
-/*!**************************************************!*\
-  !*** ./node_modules/stats-js/build/stats.min.js ***!
-  \**************************************************/
-/***/ (function(module) {
-
-!function(e,t){ true?module.exports=t():0}(this,function(){"use strict";var c=function(){var n=0,l=document.createElement("div");function e(e){return l.appendChild(e.dom),e}function t(e){for(var t=0;t<l.children.length;t++)l.children[t].style.display=t===e?"block":"none";n=e}l.style.cssText="position:fixed;top:0;left:0;cursor:pointer;opacity:0.9;z-index:10000",l.addEventListener("click",function(e){e.preventDefault(),t(++n%l.children.length)},!1);var i=(performance||Date).now(),a=i,o=0,f=e(new c.Panel("FPS","#0ff","#002")),r=e(new c.Panel("MS","#0f0","#020"));if(self.performance&&self.performance.memory)var d=e(new c.Panel("MB","#f08","#201"));return t(0),{REVISION:16,dom:l,addPanel:e,showPanel:t,begin:function(){i=(performance||Date).now()},end:function(){o++;var e=(performance||Date).now();if(r.update(e-i,200),a+1e3<=e&&(f.update(1e3*o/(e-a),100),a=e,o=0,d)){var t=performance.memory;d.update(t.usedJSHeapSize/1048576,t.jsHeapSizeLimit/1048576)}return e},update:function(){i=this.end()},domElement:l,setMode:t}};return c.Panel=function(n,l,i){var a=1/0,o=0,f=Math.round,r=f(window.devicePixelRatio||1),d=80*r,e=48*r,c=3*r,p=2*r,u=3*r,s=15*r,m=74*r,h=30*r,y=document.createElement("canvas");y.width=d,y.height=e,y.style.cssText="width:80px;height:48px";var v=y.getContext("2d");return v.font="bold "+9*r+"px Helvetica,Arial,sans-serif",v.textBaseline="top",v.fillStyle=i,v.fillRect(0,0,d,e),v.fillStyle=l,v.fillText(n,c,p),v.fillRect(u,s,m,h),v.fillStyle=i,v.globalAlpha=.9,v.fillRect(u,s,m,h),{dom:y,update:function(e,t){a=Math.min(a,e),o=Math.max(o,e),v.fillStyle=i,v.globalAlpha=1,v.fillRect(0,0,d,s),v.fillStyle=l,v.fillText(f(e)+" "+n+" ("+f(a)+"-"+f(o)+")",c,p),v.drawImage(y,u+r,s,m-r,h,u,s,m-r,h),v.fillRect(u+m-r,s,r,h),v.fillStyle=i,v.globalAlpha=.9,v.fillRect(u+m-r,s,r,f((1-e/t)*h))}}},c});
-
-
-/***/ }),
-
 /***/ "./node_modules/to-px/browser.js":
 /*!***************************************!*\
   !*** ./node_modules/to-px/browser.js ***!
@@ -7859,7 +7948,7 @@ function createTurntableController(options) {
   \************************************/
 /***/ ((module) => {
 
-module.exports = "#version 300 es\r\nprecision highp float;\r\n\r\nuniform vec3 u_Eye, u_Ref, u_Up;\r\nuniform vec2 u_Dimensions;\r\nuniform float u_Time;\r\n\r\nin vec2 fs_Pos;\r\nout vec4 out_Col;\r\n\r\nvoid main() {\r\n  out_Col = vec4(0.5 * (fs_Pos + vec2(1.0)), 0.5 * (sin(u_Time * 3.14159 * 0.01) + 1.0), 1.0);\r\n}\r\n"
+module.exports = "#version 300 es\n\n#define keyPadding 0.011f\n#define keyScale 2.7f\nprecision highp float;\n\nuniform vec3 u_Eye, u_Ref, u_Up;\nuniform vec2 u_Dimensions;\nuniform float u_Time;\n\nin vec2 fs_Pos;\nout vec4 out_Col;\n\nconst int MAX_RAY_STEPS = 128;\nconst float FOV = 45.0;\nconst float FOV_TAN = tan(45.0);\nconst float EPSILON = 1e-6;\n\nconst vec3 EYE = vec3(0.0, 0.0, -10.0);\nconst vec3 ORIGIN = vec3(0.0, 0.0, 0.0);\nconst vec3 WORLD_UP = vec3(0.0, 1.0, 0.0);\nconst vec3 WORLD_RIGHT = vec3(1.0, 0.0, 0.0);\nconst vec3 WORLD_FORWARD = vec3(0.0, 0.0, 1.0);\nconst vec3 LIGHT_DIR = vec3(-1.0, -1.0, -2.0);\n\nconst vec3 ebCut = vec3(0.062, -0.27f, 0.f) / keyScale;\nconst vec3 ebCutB = vec3(0.04, 0.45, 0.121) / keyScale;\nconst vec3 whiteKeyBox = vec3(0.1, 0.71, 0.12) / keyScale;\nconst vec3 keyStep = vec3(0.2f + keyPadding, 0.f, 0.f) / keyScale;\n\nstruct Surface {\n  float distance;\n  vec3 color;\n};\n\nSurface mins(Surface a, Surface b) {\n  if (a.distance < b.distance) {\n    return a;\n  } else {\n    return b;\n  }\n}\n\nSurface maxs(Surface a, Surface b) {\n  if (a.distance > b.distance) {\n    return a;\n  } else {\n    return b;\n  }\n}\n\nstruct Ray \n{\n  vec3 origin;\n  vec3 direction;\n};\n\nstruct Intersection \n{\n  vec3 position;\n  vec3 normal;\n  float distance_t;\n  int material_id;\n  vec3 color;\n};\n\n// --- Geometry helpers ---\nfloat smoothSubtraction(float d1, float d2, float k)  {\n    float h = clamp( 0.5 - 0.5*(d2+d1)/k, 0.0, 1.0 );\n    return mix( d2, -d1, h ) + k*h*(1.0-h); \n}\n\nfloat lengthInf(vec3 p) {\n  return max(p.x, max(p.y, p.y));\n}\n\nvec3 flipX(vec3 p) {\n  return vec3(-p.x, p.y, p.z);\n}\n\nfloat smin(float a, float b, float k) {\n  float h = clamp(0.5 + 0.5 * (b - a) / k, 0.0, 1.0);\n  return mix(b, a, h) - k * h * (1.0 - h);\n}\n\nmat3 rotationMatrix(vec3 axis, float angle)\n{\n    axis = normalize(axis);\n    float s = sin(angle);\n    float c = cos(angle);\n    float oc = 1.0 - c;\n    \n    return mat3(oc * axis.x * axis.x + c,           oc * axis.x * axis.y - axis.z * s,  oc * axis.z * axis.x + axis.y * s,\n                oc * axis.x * axis.y + axis.z * s,  oc * axis.y * axis.y + c,           oc * axis.y * axis.z - axis.x * s,\n                oc * axis.z * axis.x - axis.y * s,  oc * axis.y * axis.z + axis.x * s,  oc * axis.z * axis.z + c);\n}\n\nvec3 translateTo(vec3 p, vec3 c) {\n  return p - c;\n}\n\nvec3 rotateAround(vec3 p, vec3 axis, float angle) {\n  return rotationMatrix(axis, angle) * p;\n}\n\n// L2-Norm SDFs\nfloat sdCappedCylinder(vec3 p, float h, float r) {\n  vec2 d = abs(vec2(length(p.xz), p.y)) - vec2(h,r);\n  return min(max(d.x, d.y), 0.0) + length(max(d, 0.0));\n}\n\nfloat sdfSphere(vec3 query_position, vec3 position, float radius) {\n  return length(query_position - position) - radius;\n}\n\nfloat sdfRoundBox(vec3 p, vec3 b, float r) {\n  vec3 q = abs(p) - b;\n  return length(max(q,0.0)) + min(max(q.x,max(q.y,q.z)),0.0) - r;\n}\n\nfloat sdfBox( vec3 p, vec3 b ) {\n  vec3 q = abs(p) - b;\n  return length(max(q, 0.0)) + min(max(q.x, max(q.y, q.z)), 0.0);\n}\n\nSurface sdfIvoryKey(vec3 p) {\n  Surface s;\n  s.distance = sdfBox(p, vec3(0.05, 0.45, 0.18) / keyScale);\n  s.color = vec3(0.09f, 0.09f, 0.09f);\n  return s;\n}\n\nSurface sdfEBKey(vec3 p) {\n  Surface s;\n  vec3 pt = p + ebCut;\n  //return max(-sdfBox(pt, ebCutB), sdfBox(p, whiteKeyBox));\n  float d1 = -sdfBox(pt, ebCutB);\n  float d2 = sdfBox(p, whiteKeyBox);\n  s.distance = d1 > d2 ? d1 : d2;\n  s.color = vec3(0.98, 0.98, 0.98);\n  return s;\n}\n\nSurface sdfCFKey(vec3 p) {\n  return sdfEBKey(p - vec3(p.x * 2.f, 0.f, 0.f));\n}\n\nfloat expImpulse(float x, float k) {\n    float h = k*x;\n    return h*exp(1.0-h);\n}\n\nSurface sdfDKey(vec3 p) {\n  Surface s;\n  float mod = (1. + cos(u_Time / 4.f)) / 25.f;\n  p.z -= expImpulse(mod, 1.f/25.f) * 4.5f;\n  vec3 pt = p + vec3(0.085, -0.27f, 0.f) / keyScale;\n  float leftBox = sdfBox(pt, vec3(0.02, 0.45, 0.121) / keyScale);\n  pt = p + vec3(-0.089, -0.27f, 0.f) / keyScale;\n  float rightBox = sdfBox(pt, vec3(0.02, 0.45, 0.121) / keyScale);\n  s.distance = max(-rightBox, max(-leftBox, sdfBox(p, vec3(0.1, 0.71, 0.12) / keyScale)));\n  s.color = vec3(0.98, 0.98, 0.98);\n  return s;\n}\n\nSurface sdfGKey(vec3 p) {\n  Surface s;\n  vec3 pt = p + vec3(0.085, -0.27f, 0.f) / keyScale;\n  float leftBox = sdfBox(pt, vec3(0.018, 0.45, 0.121) / keyScale);\n  pt = p + vec3(-0.076, -0.27f, 0.f) / keyScale;\n  float rightBox = sdfBox(pt, vec3(0.025, 0.45, 0.121) / keyScale);\n  s.distance = max(-rightBox, max(-leftBox, sdfBox(p, vec3(0.1, 0.71, 0.12) / keyScale)));\n  s.color = vec3(0.98, 0.98, 0.98);\n  return s;\n}\n\nSurface sdfAKey(vec3 p) {\n  return sdfGKey(p - vec3(p.x * 2.f, 0.f, 0.f));\n}\n\nSurface sdfMusicStand(vec3 p) {\n  Surface s;\n  vec3 p2 = p + vec3(0.f, 0.58f, 0.5f);\n  p2 = rotateAround(p2, vec3(1.f, 0.f, 0.f), 0.3);\n  s.distance = smoothSubtraction(\n    sdCappedCylinder(p2 + vec3(-1.46f, 0.f, 0.2f), 0.2, 0.022),\n    smoothSubtraction(\n      sdCappedCylinder(p2 + vec3(1.46f, 0.f, 0.2f), 0.2, 0.022), \n      sdfBox(p2, vec3(1.5f, 0.02f, 0.25f)),\n      0.1), 0.1);\n\n  s.color = vec3(0.09, 0.09, 0.09);\n  return s;\n}\n\n//const vec3 keyStep = vec3(0.2f + keyPadding, 0.f, 0.f) / keyScale;\nSurface sdfOctave(vec3 p, out vec3 p2) {\n  vec3 ip = p - vec3(0.08, 0.28, -0.063) / keyScale;\n  Surface c = sdfCFKey(p);\n  p -= keyStep;\n  Surface cs = sdfIvoryKey(ip);\n  ip.x -= 0.255 / keyScale;\n  Surface d = sdfDKey(p);\n  p -= keyStep;\n  Surface ds = sdfIvoryKey(ip);\n  ip.x -= 0.38 / keyScale;\n  Surface e = sdfEBKey(p);\n  p -= keyStep;\n  Surface f = sdfCFKey(p);\n  p -= keyStep;\n  Surface fs = sdfIvoryKey(ip);\n  ip.x -= 0.24 / keyScale;\n  Surface g = sdfGKey(p);\n  p -= keyStep;\n  Surface gs = sdfIvoryKey(ip);\n  ip.x -= 0.23 / keyScale;\n  Surface a = sdfAKey(p);\n  p -= keyStep;\n  Surface as = sdfIvoryKey(ip);\n  Surface b = sdfEBKey(p);\n  p -= keyStep;\n  p2 = p;\n  return mins(b, mins(mins(as, a), mins(mins(gs, g), mins(mins(fs, f), mins(e, mins(mins(ds, d), mins(cs, c)))))));\n  //return e;\n}\n\nSurface sdfFrame(vec3 p) {\n  Surface s;\n  s.color = vec3(0.3f, 0.3f, 0.3f);\n  vec3 mainB = vec3(7.f, 2.f, 6.f) / 4.f;\n  vec3 sideB = vec3(0.05, 0.9, 0.9);\n  vec3 frontB = vec3(mainB.x, sideB.x, 0.2);\n  float top = sdfRoundBox(p + vec3(0.f, 0.f, 1.5f), vec3(7.1f, 2.1f, 0.1f) / 4.f, 0.01);\n  float bottom = \n    sdfBox(p + vec3(0.f, 1.f, -0.1f), vec3(1.7f, 0.3f, 0.1f));\n  s.distance = min(sdfBox(p + vec3(0.f, mainB.y + sideB.y - frontB.y * 3.f, 0.f), frontB), \n  smin(\n    sdfRoundBox(p - flipX(mainB) + flipX(sideB), sideB, 0.01), \n    smin(sdfRoundBox(p - mainB + sideB, sideB, 0.01), sdfBox(p, mainB), 0.1), 0.1));\n\n    s.distance = smin(top, s.distance, 0.1);\n    s.distance = min(s.distance, bottom);\n    return s;\n}\n\nSurface sdfKeys(vec3 p, int octaves) {\n  Surface v;\n  v.distance =  999999.f;\n  vec3 p2 = p;\n  for (int i = 0; i < octaves; i++) {\n    v = mins(v, sdfOctave(p2, p2));\n  }\n\n  return v;\n}\n\nSurface sceneSDF(vec3 queryPos) {\n  float box = sdfBox(queryPos + vec3(0.f, 1.f, 0.2f), vec3(1.7f, 0.3f, 0.6f));\n  Surface keys;\n  keys.distance = 999999.f;\n  if (box < EPSILON) {\n    keys = sdfKeys(queryPos + vec3(1.6f, 0.95f, 0.2f), 6);\n  }\n\n  // Surface boxs;\n  // boxs.distance = box;\n  // boxs.color = vec3(0.f, 0.f, 1.f);\n\n  // vec3 q2 = rotateAround(\n  //       queryPos,\n  //       vec3(0.0, 0.1f,0.1f),\n  //       0.5f);\n\n  // return sdfBox(\n  //   q2, \n  //   vec3(0.5f, 0.5f, 0.5f));\n\n  //return sdfOctave(queryPos);\n  vec3 p;\n  Surface o1 = sdfFrame(queryPos);//sdfOctave(queryPos, p);\n  //float o2 = sdfOctave(p, p);\n  //return min(o1, o2);\n  return mins(sdfMusicStand(queryPos), mins(keys, o1));\n}\n\n// Linf Norm SDFs\n\nconst float d = 0.001f;\nvec3 sceneSDFGrad(vec3 queryPos) {\n  vec3 diffVec = vec3(d, 0.f, 0.f);\n  return normalize(vec3(\n      sceneSDF(queryPos + diffVec).distance - sceneSDF(queryPos - diffVec).distance ,\n      sceneSDF(queryPos + diffVec.yxz).distance  - sceneSDF(queryPos - diffVec.yxz).distance ,\n      sceneSDF(queryPos + diffVec.zyx).distance  - sceneSDF(queryPos - diffVec.zyx).distance \n    ));\n}\n\nRay getRay(vec2 uv)\n{\n  Ray r;\n  \n  vec3 look = normalize(u_Ref - u_Eye);\n  vec3 camera_RIGHT = normalize(cross(u_Up, look));\n  vec3 camera_UP = u_Up;\n  \n  float aspect_ratio = u_Dimensions.x / u_Dimensions.y;\n  vec3 screen_vertical = camera_UP * FOV_TAN; \n  vec3 screen_horizontal = camera_RIGHT * aspect_ratio * FOV_TAN;\n  vec3 screen_point = (look + uv.x * screen_horizontal + uv.y * screen_vertical);\n  \n  r.origin = (screen_point + u_Eye) / 2.f;\n  r.direction = normalize(screen_point - u_Eye);\n\n  return r;\n}\n\nconst float MIN_STEP = EPSILON * 2.f;\nIntersection getRaymarchedIntersection(vec2 uv)\n{\n  Intersection intersection;\n  intersection.distance_t = -1.0;\n  Ray ray = getRay(uv);\n\n  float distance_t = 0.f;\n  float prevDist = 99999.f;\n  // if (uv.x < 0.5f || uv.y < 0.5f) {\n  //   return intersection;\n  // }\n\n  for (int step = 0; step < MAX_RAY_STEPS; step++) {\n    vec3 point = ray.origin + ray.direction * distance_t;\n    Surface s = sceneSDF(point);\n    // if (point.y > 5.f || point.z > 5.f) {\n    //   break;\n    // }\n    // if (isinf(point.x) || isinf(point.y) || isinf(point.z)) {\n    //   break;\n    // }\n\n    // if (dist > prevDist) {\n    //   break;\n    // }\n\n    if (s.distance < EPSILON) {\n      intersection.distance_t = s.distance;\n      intersection.position = point;\n      intersection.normal = sceneSDFGrad(point);\n      intersection.color = s.color;\n\n      return intersection;\n    }\n\n    distance_t += max(s.distance, MIN_STEP);\n\n    if (distance_t > 100.f) {\n      break;\n    }\n  }\n\n  return intersection;\n}\n\nconst vec3 light = vec3(10.f, 14.f, 3.f);\nvec3 getSceneColor(vec2 uv) {\n  Intersection intersection = getRaymarchedIntersection(uv);\n  // if (uv.x > 0.3f && uv.y < -0.3f) {\n  //   if (abs(intersection.distance_t) < EPSILON) {\n  //     if (isinf(intersection.position.x)) {\n  //       return vec3(1.f, 0.f, 0.f);\n  //     }\n  //   }\n  //   return vec3(0.f, 0.f, 1.f);\n  // }\n\n  if (abs(intersection.distance_t) < EPSILON)\n  {\n      float diffuseTerm = dot(intersection.normal, normalize(u_Eye - intersection.position));\n      diffuseTerm = clamp(diffuseTerm, 0.f, 1.f);\n\n      return intersection.color * (diffuseTerm + 0.2);\n  }\n\n  return vec3(0.7, 0.2, 0.2);\n}\n\nvoid main() {\n  // downsample resolution\n  // vec2 target = u_Dimensions / 2.f;\n  // vec2 scaled = (fs_Pos + vec2(1.f, 1.f)) / 2.f;\n  // vec2 uv = vec2(floor(target.x * scaled.x), floor(target.y * scaled.y));\n  // uv.x /= target.x;\n  // uv.y /= target.y;\n  // uv = uv * 2.f - vec2(1.f, 1.f);\n  // Time varying pixel color\n  vec3 col = getSceneColor(fs_Pos);\n\n  // Output to screen\n  out_Col = vec4(col, 1.0);//vec4(0.5 * (fs_Pos + vec2(1.0)), 0.5 * (sin(u_Time * 3.14159 * 0.01) + 1.0), 1.0);\n}"
 
 /***/ }),
 
@@ -7869,7 +7958,7 @@ module.exports = "#version 300 es\r\nprecision highp float;\r\n\r\nuniform vec3 
   \************************************/
 /***/ ((module) => {
 
-module.exports = "#version 300 es\r\nprecision highp float;\r\n\r\n// The vertex shader used to render the background of the scene\r\n\r\nin vec4 vs_Pos;\r\nout vec2 fs_Pos;\r\n\r\nvoid main() {\r\n  fs_Pos = vs_Pos.xy;\r\n  gl_Position = vs_Pos;\r\n}\r\n"
+module.exports = "#version 300 es\nprecision highp float;\n\n// The vertex shader used to render the background of the scene\n\nin vec4 vs_Pos;\nout vec2 fs_Pos;\n\nvoid main() {\n  fs_Pos = vs_Pos.xy;\n  gl_Position = vs_Pos;\n}\n"
 
 /***/ })
 
@@ -7893,25 +7982,13 @@ module.exports = "#version 300 es\r\nprecision highp float;\r\n\r\n// The vertex
 /******/ 		};
 /******/ 	
 /******/ 		// Execute the module function
-/******/ 		__webpack_modules__[moduleId].call(module.exports, module, module.exports, __webpack_require__);
+/******/ 		__webpack_modules__[moduleId](module, module.exports, __webpack_require__);
 /******/ 	
 /******/ 		// Return the exports of the module
 /******/ 		return module.exports;
 /******/ 	}
 /******/ 	
 /************************************************************************/
-/******/ 	/* webpack/runtime/compat get default export */
-/******/ 	(() => {
-/******/ 		// getDefaultExport function for compatibility with non-harmony modules
-/******/ 		__webpack_require__.n = (module) => {
-/******/ 			var getter = module && module.__esModule ?
-/******/ 				() => (module['default']) :
-/******/ 				() => (module);
-/******/ 			__webpack_require__.d(getter, { a: getter });
-/******/ 			return getter;
-/******/ 		};
-/******/ 	})();
-/******/ 	
 /******/ 	/* webpack/runtime/define property getters */
 /******/ 	(() => {
 /******/ 		// define getter functions for harmony exports
@@ -7961,18 +8038,15 @@ var __webpack_exports__ = {};
   !*** ./src/main.ts ***!
   \*********************/
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var gl_matrix__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! gl-matrix */ "./node_modules/gl-matrix/esm/vec3.js");
-/* harmony import */ var stats_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! stats-js */ "./node_modules/stats-js/build/stats.min.js");
-/* harmony import */ var stats_js__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(stats_js__WEBPACK_IMPORTED_MODULE_0__);
-Object(function webpackMissingModule() { var e = new Error("Cannot find module 'dat-gui'"); e.code = 'MODULE_NOT_FOUND'; throw e; }());
-/* harmony import */ var _geometry_Square__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./geometry/Square */ "./src/geometry/Square.ts");
-/* harmony import */ var _rendering_gl_OpenGLRenderer__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./rendering/gl/OpenGLRenderer */ "./src/rendering/gl/OpenGLRenderer.ts");
-/* harmony import */ var _Camera__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./Camera */ "./src/Camera.ts");
-/* harmony import */ var _globals__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./globals */ "./src/globals.ts");
-/* harmony import */ var _rendering_gl_ShaderProgram__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./rendering/gl/ShaderProgram */ "./src/rendering/gl/ShaderProgram.ts");
+/* harmony import */ var gl_matrix__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! gl-matrix */ "./node_modules/gl-matrix/esm/vec3.js");
+/* harmony import */ var _geometry_Square__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./geometry/Square */ "./src/geometry/Square.ts");
+/* harmony import */ var _rendering_gl_OpenGLRenderer__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./rendering/gl/OpenGLRenderer */ "./src/rendering/gl/OpenGLRenderer.ts");
+/* harmony import */ var _Camera__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./Camera */ "./src/Camera.ts");
+/* harmony import */ var _globals__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./globals */ "./src/globals.ts");
+/* harmony import */ var _rendering_gl_ShaderProgram__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./rendering/gl/ShaderProgram */ "./src/rendering/gl/ShaderProgram.ts");
 
-
-
+// import * as Stats from 'stats-js';
+// import * as DAT from 'dat-gui';
 
 
 
@@ -7987,7 +8061,7 @@ const controls = {
 let square;
 let time = 0;
 function loadScene() {
-    square = new _geometry_Square__WEBPACK_IMPORTED_MODULE_2__["default"](gl_matrix__WEBPACK_IMPORTED_MODULE_7__.fromValues(0, 0, 0));
+    square = new _geometry_Square__WEBPACK_IMPORTED_MODULE_0__["default"](gl_matrix__WEBPACK_IMPORTED_MODULE_5__.fromValues(0, 0, 0));
     square.create();
     // time = 0;
 }
@@ -8004,14 +8078,14 @@ function main() {
         }
     }, false);
     // Initial display for framerate
-    const stats = stats_js__WEBPACK_IMPORTED_MODULE_0__();
-    stats.setMode(0);
-    stats.domElement.style.position = 'absolute';
-    stats.domElement.style.left = '0px';
-    stats.domElement.style.top = '0px';
-    document.body.appendChild(stats.domElement);
+    // const stats = Stats();
+    // stats.setMode(0);
+    // stats.domElement.style.position = 'absolute';
+    // stats.domElement.style.left = '0px';
+    // stats.domElement.style.top = '0px';
+    // document.body.appendChild(stats.domElement);
     // Add controls to the gui
-    const gui = new Object(function webpackMissingModule() { var e = new Error("Cannot find module 'dat-gui'"); e.code = 'MODULE_NOT_FOUND'; throw e; }())();
+    // const gui = new DAT.GUI();
     // get canvas and webgl context
     const canvas = document.getElementById('canvas');
     const gl = canvas.getContext('webgl2');
@@ -8020,16 +8094,16 @@ function main() {
     }
     // `setGL` is a function imported above which sets the value of `gl` in the `globals.ts` module.
     // Later, we can import `gl` from `globals.ts` to access it
-    (0,_globals__WEBPACK_IMPORTED_MODULE_5__.setGL)(gl);
+    (0,_globals__WEBPACK_IMPORTED_MODULE_3__.setGL)(gl);
     // Initial call to load scene
     loadScene();
-    const camera = new _Camera__WEBPACK_IMPORTED_MODULE_4__["default"](gl_matrix__WEBPACK_IMPORTED_MODULE_7__.fromValues(0, 0, -10), gl_matrix__WEBPACK_IMPORTED_MODULE_7__.fromValues(0, 0, 0));
-    const renderer = new _rendering_gl_OpenGLRenderer__WEBPACK_IMPORTED_MODULE_3__["default"](canvas);
+    const camera = new _Camera__WEBPACK_IMPORTED_MODULE_2__["default"](gl_matrix__WEBPACK_IMPORTED_MODULE_5__.fromValues(0, 0, -10), gl_matrix__WEBPACK_IMPORTED_MODULE_5__.fromValues(0, 0, 0));
+    const renderer = new _rendering_gl_OpenGLRenderer__WEBPACK_IMPORTED_MODULE_1__["default"](canvas);
     renderer.setClearColor(164.0 / 255.0, 233.0 / 255.0, 1.0, 1);
     gl.enable(gl.DEPTH_TEST);
-    const flat = new _rendering_gl_ShaderProgram__WEBPACK_IMPORTED_MODULE_6__["default"]([
-        new _rendering_gl_ShaderProgram__WEBPACK_IMPORTED_MODULE_6__.Shader(gl.VERTEX_SHADER, __webpack_require__(/*! ./shaders/flat-vert.glsl */ "./src/shaders/flat-vert.glsl")),
-        new _rendering_gl_ShaderProgram__WEBPACK_IMPORTED_MODULE_6__.Shader(gl.FRAGMENT_SHADER, __webpack_require__(/*! ./shaders/flat-frag.glsl */ "./src/shaders/flat-frag.glsl")),
+    const flat = new _rendering_gl_ShaderProgram__WEBPACK_IMPORTED_MODULE_4__["default"]([
+        new _rendering_gl_ShaderProgram__WEBPACK_IMPORTED_MODULE_4__.Shader(gl.VERTEX_SHADER, __webpack_require__(/*! ./shaders/flat-vert.glsl */ "./src/shaders/flat-vert.glsl")),
+        new _rendering_gl_ShaderProgram__WEBPACK_IMPORTED_MODULE_4__.Shader(gl.FRAGMENT_SHADER, __webpack_require__(/*! ./shaders/flat-frag.glsl */ "./src/shaders/flat-frag.glsl")),
     ]);
     function processKeyPresses() {
         // Use this if you wish
@@ -8037,28 +8111,31 @@ function main() {
     // This function will be called every frame
     function tick() {
         camera.update();
-        stats.begin();
-        gl.viewport(0, 0, window.innerWidth, window.innerHeight);
+        gl.viewport(0, 0, canvas.width, canvas.height);
         renderer.clear();
         processKeyPresses();
         renderer.render(camera, flat, [
             square,
         ], time);
         time++;
-        stats.end();
         // Tell the browser to call `tick` again whenever it renders a new frame
         requestAnimationFrame(tick);
     }
+    const resDiv = 2;
     window.addEventListener('resize', function () {
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        camera.setAspectRatio(window.innerWidth / window.innerHeight);
+        let width = window.innerWidth / resDiv;
+        let height = window.innerHeight / resDiv;
+        renderer.setSize(width, height);
+        camera.setAspectRatio(width / height);
         camera.updateProjectionMatrix();
-        flat.setDimensions(window.innerWidth, window.innerHeight);
+        flat.setDimensions(width, height);
     }, false);
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    camera.setAspectRatio(window.innerWidth / window.innerHeight);
+    let width = window.innerWidth / resDiv;
+    let height = window.innerHeight / resDiv;
+    renderer.setSize(width, height);
+    camera.setAspectRatio(width / height);
     camera.updateProjectionMatrix();
-    flat.setDimensions(window.innerWidth, window.innerHeight);
+    flat.setDimensions(width, height);
     // Start the render loop
     tick();
 }
