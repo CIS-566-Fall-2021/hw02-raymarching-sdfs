@@ -24,6 +24,7 @@ kirby + star
 - arms are also animated in this way
 - feet are fixed to star
 - entire sdf bobs around using sin/cosin functions with time input
+
 optimization
 - used a static bounding sphere to restrict the area where rays are being compared against SDFs
 - bounded the ray steps to the most minimal value that would still allow for complete rendering of geometry
