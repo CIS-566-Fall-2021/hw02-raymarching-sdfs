@@ -10,7 +10,7 @@ out vec4 out_Col;
 
 const int RAY_STEPS = 256;
 #define DEG_TO_RAD 3.14159 / 180.0
-#define LIGHT_POS vec3(-8.0, 40.0, -14.0)
+#define LIGHT_POS vec3(-8.0, 40.0, -12.0)
 #define MAX_RAY_Z 50.0;
 
 ////////// GEOMETRY //////////
@@ -433,7 +433,7 @@ vec3 getSceneColor(int hitObj, vec3 p, vec3 n, vec3 light, vec3 view) {
         return vec3(0.85, 0.8, 0.7) * lambert;
         break;
     }
-    return vec3(1.0);
+    return vec3(0.0);
 }
 
 Intersection getIntersection(vec3 dir, vec3 eye, vec3 lightPos) {
