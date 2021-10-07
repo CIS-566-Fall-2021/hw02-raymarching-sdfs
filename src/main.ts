@@ -20,7 +20,7 @@ let time: number = 0;
 function loadScene() {
   square = new Square(vec3.fromValues(0, 0, 0));
   square.create();
-  // time = 0;
+  time = 0;
 }
 
 function main() {
@@ -79,31 +79,36 @@ function main() {
   // This function will be called every frame
   function tick() {
     camera.update();
-    // stats.begin();
-    gl.viewport(0, 0, window.innerWidth, window.innerHeight);
+
+    gl.viewport(0, 0, canvas.width, canvas.height);
+
     renderer.clear();
     processKeyPresses();
     renderer.render(camera, flat, [
       square,
     ], time);
     time++;
-    // stats.end();
 
     // Tell the browser to call `tick` again whenever it renders a new frame
     requestAnimationFrame(tick);
   }
 
+  const resDiv: number = 2;
   window.addEventListener('resize', function() {
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    camera.setAspectRatio(window.innerWidth / window.innerHeight);
+    let width: number = window.innerWidth / resDiv;
+    let height: number = window.innerHeight / resDiv;
+    renderer.setSize(width, height);
+    camera.setAspectRatio(width / height);
     camera.updateProjectionMatrix();
-    flat.setDimensions(window.innerWidth, window.innerHeight);
+    flat.setDimensions(width, height);
   }, false);
 
-  renderer.setSize(window.innerWidth, window.innerHeight);
-  camera.setAspectRatio(window.innerWidth / window.innerHeight);
+  let width: number = window.innerWidth / resDiv;
+  let height: number = window.innerHeight / resDiv;
+  renderer.setSize(width, height);
+  camera.setAspectRatio(width / height);
   camera.updateProjectionMatrix();
-  flat.setDimensions(window.innerWidth, window.innerHeight);
+  flat.setDimensions(width, height);
 
   // Start the render loop
   tick();
