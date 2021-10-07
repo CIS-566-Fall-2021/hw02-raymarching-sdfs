@@ -92,6 +92,12 @@ float unionSDF(float distance1, float distance2)
     return min(distance1, distance2);
 }
 
+float smoothSubtraction( float d1, float d2, float k ) 
+{
+    float h = clamp( 0.5 - 0.5*(d2+d1)/k, 0.0, 1.0 );
+    return mix( d2, -d1, h ) + k*h*(1.0-h); 
+}
+
 // SDF primitives
 
 // Creates a box with dimensions dimensions
@@ -159,8 +165,12 @@ float sceneSDF(vec3 queryPos)
         vec3 shiftedFace = queryPos - vec3(-0.13, 1.3, 0.57);
         shiftedFace = rotateAboutX(shiftedFace, PI / 2.0);
         shiftedFace = rotateAboutZ(shiftedFace, PI / 7.0);
-        
-        closestPointDistance = unionSDF(sdfRoundedCylinder(shiftedFace, 0.2, 0.1, 0.2), closestPointDistance);
+
+        float scubaMask = sdfRoundedCylinder(shiftedFace, 0.2, 0.1, 0.2);
+        float negMask = sdfRoundedCylinder(shiftedFace, 0.15, 0.05, 0.5);
+        scubaMask = smoothSubtraction(negMask, scubaMask, 0.0);
+
+        closestPointDistance = unionSDF(scubaMask, closestPointDistance);
 
         // Add right upper arm
         closestPointDistance = unionSDF(sdfCapsule(queryPos - vec3(-0.8, -0.4, -0.4), 
