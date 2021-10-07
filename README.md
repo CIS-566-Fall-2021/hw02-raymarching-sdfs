@@ -7,6 +7,8 @@ Pennkey: onlyname
 ## Overview
 * **Leaning Tower of Pisa Recreation**
 <img src="Pisa1.png" width="800"/>
+* **Inspiration**
+<img src="pisa-leaning-tower1.jpg" width="800"/>
 
 [Live Demo](https://onlyname1.github.io/hw02-raymarching-sdfs/)
 
