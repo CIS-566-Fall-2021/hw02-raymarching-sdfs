@@ -5,7 +5,7 @@ PennKey Emma20
 I chose to create an sdf scene based off an image of the golden gate bridge. I used a myraid of different sdf functions and used smooth union, or smin in my code for my front rocks and on my cables. The water under the bridge is animated and I used toolbox functions include, cosine, mix, and Ease in quadratic. I am using mix to interpolate between movement in the x and z direction and ease in quadritic for the time in order to make the transition where the motion starts smoother. (I implemented some features to optimize but the frame rate is still low and the animated is subtle since the water is supposed to be far under the bride) I have currently implemented soft shadows but I am using a high k value to simulate hard shadows for this assignment, but still give myself the option to edit the shadows for the next assigment. Also I know the back of the bridge just kind of awkwardly stops. I am planning on blending it more with the background sky color for the next project. 
 
 -----------
-![](images/bridge.jped)
+![](images/bridge.jpeg)
 
 ![](images/sdfBridge.png)
 ## Objective
