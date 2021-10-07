@@ -107,6 +107,14 @@ float sdfSphere(vec3 query_position, vec3 position, float radius)
     return length(query_position - position) - radius;
 }
 
+
+float sdfRoundedCylinder( vec3 p, float ra, float rb, float h )
+{
+  vec2 d = vec2( length(p.xz)-2.0*ra+rb, abs(p.y) - h );
+  return min(max(d.x,d.y),0.0) + length(max(d,0.0)) - rb;
+}
+
+
 // Creates a plane
 float heightField(vec3 queryPos, float planeHeight)
 {
@@ -137,7 +145,7 @@ float sceneSDF(vec3 queryPos)
     closestPointDistance = unionSDF(heightField(queryPos, -2.0), closestPointDistance);
 
     // Bounding box to improve performance
-    if(sdfBox(queryPos, vec3(5.0, 5.0, 5.0) )< closestPointDistance)
+    if(sdfBox(queryPos, vec3(5.0, 5.0, 5.0) ) < closestPointDistance)
     {
         // Add body
         vec3 bodyPos = rotateXYZ(queryPos, PI / 10.0,  PI / 4.0, 0.0);
@@ -146,6 +154,13 @@ float sceneSDF(vec3 queryPos)
         
         // Add head
         closestPointDistance = unionSDF(sdfSphere(queryPos, vec3(0.0, 1.3, 0.3), 0.6), closestPointDistance);
+
+        // Add face
+        vec3 shiftedFace = queryPos - vec3(-0.13, 1.3, 0.57);
+        shiftedFace = rotateAboutX(shiftedFace, PI / 2.0);
+        shiftedFace = rotateAboutZ(shiftedFace, PI / 7.0);
+        
+        closestPointDistance = unionSDF(sdfRoundedCylinder(shiftedFace, 0.2, 0.1, 0.2), closestPointDistance);
 
         // Add right upper arm
         closestPointDistance = unionSDF(sdfCapsule(queryPos - vec3(-0.8, -0.4, -0.4), 
