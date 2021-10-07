@@ -447,6 +447,5 @@ vec3 getSceneColor(vec2 uv) {
 
 void main() {
   vec3 col = getSceneColor(fs_Pos);
-    // Output to screen
   out_Col = vec4(col, 1.0);
 }
