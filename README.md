@@ -1,6 +1,6 @@
 # CIS 566 Homework 2: Implicit Surfaces
 
-Name: Eddie Huang
+Eddie Huang
 
 PennKey: huanged
 
@@ -13,6 +13,8 @@ Part 2:
 ![](Pic1.png)
 
 ![](Pic2.png)
+
+To generate the geoemtry for the scene I use various SDF functions from https://www.iquilezles.org/www/articles/distfunctions/distfunctions.htm such as round boxes, boxes, triangular prisms, as well as some smoothblending. In particular I used smoothblending to combine the stairs in the scene. I then used a basic ray-marching architecture to use these SDF functions to render the geometry. For the hard shadows I used a shadow-feeler ray test to determine if there was nay occlusion from the point on the geometry to the light. I animated the ellipsoid in the back of the scene to periodically go up and down, using cosine and bias to make it go up slowly in the beginning.
 
 
 ## Objective
