@@ -4,6 +4,8 @@ Eddie Huang
 
 PennKey: huanged
 
+Live Demo (not working): https://eddieh80.github.io/hw02-raymarching-sdfs/
+
 Part 1:
 
 ![](Normals.png)
@@ -14,7 +16,9 @@ Part 2:
 
 ![](Pic2.png)
 
-To generate the geoemtry for the scene I use various SDF functions from https://www.iquilezles.org/www/articles/distfunctions/distfunctions.htm such as round boxes, boxes, triangular prisms, as well as some smoothblending. In particular I used smoothblending to combine the stairs in the scene. I then used a basic ray-marching architecture to use these SDF functions to render the geometry. For the hard shadows I used a shadow-feeler ray test to determine if there was nay occlusion from the point on the geometry to the light. I animated the ellipsoid in the back of the scene to periodically go up and down, using cosine and bias to make it go up slowly in the beginning.
+Description:
+
+To generate the geometry for in scene I used various SDF functions from https://www.iquilezles.org/www/articles/distfunctions/distfunctions.htm such as round boxes, boxes, triangular prisms, as well as some smoothblending. In particular I used smoothblending to combine the different stairs in the scene into one. I then used a basic ray-marching architecture to use these SDF functions to render the geometry. For the hard shadows I used a shadow-feeler ray test to determine if there was any geometry occluding the ray from the point to the light. I animated the ellipsoid in the back of the scene to periodically go up and down, using cosine and bias to make it go up more slowly in the beginning.
 
 
 ## Objective
