@@ -98,6 +98,28 @@ float smoothSubtraction( float d1, float d2, float k )
     return mix( d2, -d1, h ) + k*h*(1.0-h); 
 }
 
+
+float cubicPulse(float c, float w, float x)
+{
+    x = abs(x - c);
+    if(x > w) return 0.0f;
+    x /= w;
+    return 1.0f - x * x * (3.0f - 2.0f * x);
+}
+
+
+float polyImpulse(float k, float n, float x)
+{
+    return (n / (n - 1.0)) * pow((n - 1.0) * k, 1.0 / n) * x / (1.0 + k * pow(x, n));
+}
+
+
+float quaImpulse( float k, float x )
+{
+    return 2.0*sqrt(k)*x/(1.0+k*x*x);
+}
+
+
 // SDF primitives
 
 // Creates a box with dimensions dimensions
@@ -162,9 +184,11 @@ float sceneSDF(vec3 queryPos)
         closestPointDistance = unionSDF(sdfSphere(queryPos, vec3(0.0, 1.3, 0.3), 0.6), closestPointDistance);
 
         // Add face
-        vec3 shiftedFace = queryPos - vec3(-0.13, 1.3, 0.57);
+        vec3 shiftedFace = queryPos - vec3(-0.13, 1.3, 0.6);
         shiftedFace = rotateAboutX(shiftedFace, PI / 2.0);
-        shiftedFace = rotateAboutZ(shiftedFace, PI / 7.0);
+        // Make robot abruptly turn head to look at camera
+        shiftedFace = rotateAboutZ(shiftedFace, PI / 5.0 - quaImpulse(2.0, clamp(sin(u_Time * 0.05), 0.0, 1.0)) / 2.0);
+
 
         float scubaMask = sdfRoundedCylinder(shiftedFace, 0.2, 0.1, 0.2);
         float negMask = sdfRoundedCylinder(shiftedFace, 0.15, 0.05, 0.5);
