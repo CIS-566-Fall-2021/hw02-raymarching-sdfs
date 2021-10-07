@@ -5,6 +5,8 @@
 ## link to scene
 [https://ruthchu.github.io/hw02-raymarching-sdfs/](https://ruthchu.github.io/hw02-raymarching-sdfs/)
 
+decided to make kirby riding a star. inspiration taken from [here](https://youtu.be/WShCN-AYHqA)
+
 ## static image!
 
 ![](images/kirbyrender.png)
