@@ -11,7 +11,8 @@ out vec4 out_Col;
 const int MAX_RAY_STEPS = 70;
 const float FOV = 45.0;
 const float EPSILON = 1e-5;
-
+const float MAX_RAY_Z = 40.0;
+#define DIST_LIMIT 1
 // const vec3 EYE = vec3(0.0, 0.0, 10.0);
 const vec3 ORIGIN = vec3(0.0, 0.0, 0.0);
 // const vec3 WORLD_UP = vec3(0.0, 1.0, 0.0);
@@ -393,6 +394,12 @@ vec3 estimateNormals(vec3 p) {
 
 }
 
+bool isRayTooLong(vec3 queryPoint, vec3 origin)
+{
+    return length(queryPoint - origin) > MAX_RAY_Z;
+}
+
+
 Intersection getRaymarchedIntersection(vec2 uv) {
   Intersection intersection;
   float distanceT = 0.0;
@@ -402,6 +409,9 @@ Intersection getRaymarchedIntersection(vec2 uv) {
   for(int step; step <= MAX_RAY_STEPS; ++step) {
     vec3 queryPoint = r.origin + r.direction * distanceT;
     int objHit;
+    #if DIST_LIMIT
+    if(isRayTooLong(queryPoint, r.origin)) break;
+    #endif
     float sdf = sceneSDF(queryPoint, objHit);
     if(sdf < EPSILON) {
       intersection.distance_t = distanceT;
