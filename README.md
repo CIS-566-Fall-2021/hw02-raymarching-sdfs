@@ -12,6 +12,12 @@ Part 1:
 
 Part 2:
 
+Reference:
+
+![](Reference.png)
+
+Scene:
+
 ![](Pic1.png)
 
 ![](Pic2.png)
