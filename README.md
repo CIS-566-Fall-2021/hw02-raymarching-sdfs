@@ -2,7 +2,7 @@
 # Link:
 https://gserena01.github.io/hw02-raymarching-sdfs/
 # Images:
-![image](https://user-images.githubusercontent.com/60444726/135357336-64d4801a-70c1-4156-8b89-a4700512aff5.png)
+![image](https://user-images.githubusercontent.com/60444726/136303288-56a5e5cf-45c0-4c4f-8d5b-71ce14544b6e.png)
 
 ![image](https://user-images.githubusercontent.com/60444726/135357472-5eee50be-b314-4483-a183-6a38e9705ef8.png)
 
