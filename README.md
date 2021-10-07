@@ -5,7 +5,7 @@
 Name: Felicity Yick
 Pennkey: feliyick
 
-Link: https://feliyick.github.io/hw02-raymarching-sdfs/
+Link: https://feliyick.github.io/hw02-raymarching-sdfs/ (It doesn't work :( I couldn't figure it out)
 
 Screenshot: 
 
