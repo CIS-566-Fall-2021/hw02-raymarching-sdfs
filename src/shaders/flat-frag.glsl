@@ -13,6 +13,7 @@ out vec4 out_Col;
 
 /* -------------- Scene Globals -------------- */
 const int MAX_RAY_STEPS = 180;
+const int MAX_RAY_LENGTH = 75;
 const float FOV = 45.0;
 const float EPSILON = 1e-2;
 const float MAX_FLT = 1e10;
@@ -69,18 +70,25 @@ struct Tree {
   float radius;
   float height;
 };
-const Tree TREES[6] = Tree[6](  Tree(vec3(-2.7, -7.0, -6.0), 1.0, 10.0),  // first tree right
-                                Tree(vec3(-3.6, -7.0, -1.0), 0.9, 10.0),  // second tree right
-                                Tree(vec3( 3.6, -7.0, -6.8), 0.7, 10.0),  // first tree left
-                                Tree(vec3( 4.1, -7.0, -4.0), 0.7, 10.0),  // second tree left
-                                Tree(vec3( 3.9, -7.0, -1.5), 0.7, 10.0),  // third tree left
-                                Tree(vec3( 3.3, -7.0,  3.0), 0.9, 10.0) );// fourth tree left
+const Tree R_TREES[2] = Tree[2](  Tree(vec3(-2.7, -7.0, -6.0), 1.0, 10.0),    // first tree right
+                                  Tree(vec3(-3.6, -7.0, -1.0), 0.9, 10.0) );  // second tree right
+const vec3 R_TREES_BB_LOW = vec3(1.3, -2.0, -0.5);
+const vec3 R_TREES_BB_HIGH = vec3(4.9, 10.0, 15.0);
+
+const Tree L_TREES[4] = Tree[4](  Tree(vec3( 3.6, -7.0, -6.8), 0.7, 10.0),  // first tree left
+                                  Tree(vec3( 4.1, -7.0, -4.0), 0.7, 10.0),  // second tree left
+                                  Tree(vec3( 3.9, -7.0, -1.5), 0.7, 10.0),  // third tree left
+                                  Tree(vec3( 3.3, -7.0,  3.0), 0.9, 10.0) );// fourth tree left
+const vec3 L_TREES_BB_LOW = vec3(-5.0, -2.0, -0.5);
+const vec3 L_TREES_BB_HIGH = vec3(-1.0, 10.0, 15.0);
 
 const Tree FAR_TREES[4] = Tree[4]( Tree(vec3(-0.5, 0.0, 25.0), 0.8, 22.0),
                                    Tree(vec3(-2.1, 0.0, 18.0), 1.1, 22.0),
                                    Tree(vec3(-5.5, 0.0, 19.0), 0.9, 22.0),
                                    Tree(vec3( 5.5, 0.0, 40.0), 0.8, 22.0));
 
+const vec3 FAR_TREES_BB_LOW = vec3(-6.5, -1.0, -40.0);
+const vec3 FAR_TREES_BB_HIGH = vec3(5.8, 22.0, -11.5);
 
 /// ============================ STRUCTS =================================== ///
 struct Ray {
@@ -129,6 +137,10 @@ vec3 random3( vec3 p ) {
                           dot(p,vec3(269.5, 183.3, 765.54)),
                           dot(p, vec3(420.69, 631.2,109.21))))
                  *43758.5453);
+}
+bool inBB(vec3 p, vec3 low, vec3 high){
+  return p.x > low.x && p.x < high.x && p.y > low.y && 
+         p.y < high.y && p.z > low.z && p.z < high.z;
 }
 
 /* ----------- Transition Funcs ------------ */
@@ -249,24 +261,29 @@ float Worley3D(vec3 p) {
 
 /// ========================== SCENE SDFS ================================== ///
 
-float getTerrainHeight(vec2 uv, out bool isPath){
+float getTerrainHeight(vec2 uv, out bool isPath, float ptY){
   isPath = false;
 
-  // create hills
-  float deformedHeight = HILL_HEIGHT * perlinNoise2D((uv / HILL_FREQ) + HILL_OFFSET) + GROUND_HEIGHT;
+  float maxTerrainHeight = 0.0;
+  if (ptY < maxTerrainHeight){
+    // create hills
+    float perlinDeform = uv[1] > -10.0 && uv.x < 5.0 && uv.x > -6.0 ? perlinNoise2D((uv / HILL_FREQ) + HILL_OFFSET) : 0.f;
+    float deformedHeight = HILL_HEIGHT * perlinDeform + GROUND_HEIGHT;
 
-  // displace path in shape of sin wave
-  float wavyPath = PATH_OFFSET_X - PATH_WAVE_AMP * sin((uv.y - PATH_OFFSET_Z) / PATH_WAVE_FREQ);
+    // displace path in shape of sin wave
+    float wavyPath = PATH_OFFSET_X - PATH_WAVE_AMP * sin((uv.y - PATH_OFFSET_Z) / PATH_WAVE_FREQ);
 
-  // find distance to path to determine color & amount of hill deformation
-  float distToPath = abs(uv.x - wavyPath);
-  if (distToPath < PATH_PAVE_WIDTH){    
-    if (distToPath < PATH_COLOR_WIDTH){
-      isPath = true;
-    }  
-    return mix(GROUND_HEIGHT, deformedHeight, easeInOutQuad(distToPath / PATH_PAVE_WIDTH));
+    // find distance to path to determine color & amount of hill deformation
+    float distToPath = abs(uv.x - wavyPath);
+    if (distToPath < PATH_PAVE_WIDTH){    
+      if (distToPath < PATH_COLOR_WIDTH){
+        isPath = true;
+      }  
+      return mix(GROUND_HEIGHT, deformedHeight, easeInOutQuad(distToPath / PATH_PAVE_WIDTH));
+    }
+    return deformedHeight;
   }
-  return deformedHeight;
+  return -MAX_FLT;
 }
 
 float raisedGroundSDF(vec3 queryPt, float rotY, float rotZ){
@@ -283,49 +300,65 @@ float fakeTreeSDF(vec3 queryPt, Tree t){
 float treeSDF(vec3 queryPt, float rotY, float rotZ, Tree t){
   vec3 p = rotateY(rotateZ(queryPt + t.pos, rotZ), rotY);
 
-  // tree knot controls
-  float treeKnotRadius = 0.8 * t.radius;
-  float treeKnotHeight = 0.25 * t.height;
-  float treeKnotSmoothFactor = 0.7;
+  //if (sdBox(p, vec3(t.radius + 0.1, t.height + 0.1, t.radius + 0.1)) <= 0.0001){
+    // tree knot controls
+    float treeKnotRadius = 0.8 * t.radius;
+    float treeKnotHeight = 0.25 * t.height;
+    float treeKnotSmoothFactor = 0.7;
 
-  // get angles to create tree knot cones
-  float treeKnotAngle = getConeAngle(treeKnotHeight, treeKnotRadius);
-  vec2 treeKnotAngles = vec2(cos(treeKnotAngle), sin(treeKnotAngle));
+    // get angles to create tree knot cones
+    float treeKnotAngle = getConeAngle(treeKnotHeight, treeKnotRadius);
+    vec2 treeKnotAngles = vec2(cos(treeKnotAngle), sin(treeKnotAngle));
 
-  // find tree knot displacements (relative to trunk)
-  vec3 treeKnotDisplacement1 = vec3(t.radius - 0.29*treeKnotRadius, t.height - treeKnotHeight, t.radius - 0.29*treeKnotRadius);
-  vec3 treeKnotDisplacement2 = vec3(-treeKnotDisplacement1.x, treeKnotDisplacement1.yz);
-  vec3 treeKnotDisplacement3 = vec3(-treeKnotDisplacement1.x, treeKnotDisplacement1.y, -treeKnotDisplacement1.z);
-  vec3 treeKnotDisplacement4 = vec3(treeKnotDisplacement1.x, treeKnotDisplacement1.y, -treeKnotDisplacement1.z);
+    // find tree knot displacements (relative to trunk)
+    vec3 treeKnotDisplacement1 = vec3(t.radius - 0.29*treeKnotRadius, t.height - treeKnotHeight, t.radius - 0.29*treeKnotRadius);
+    vec3 treeKnotDisplacement2 = vec3(-treeKnotDisplacement1.x, treeKnotDisplacement1.yz);
+    vec3 treeKnotDisplacement3 = vec3(-treeKnotDisplacement1.x, treeKnotDisplacement1.y, -treeKnotDisplacement1.z);
+    vec3 treeKnotDisplacement4 = vec3(treeKnotDisplacement1.x, treeKnotDisplacement1.y, -treeKnotDisplacement1.z);
   
-  // tree knot sdf definitions
-  float treeKnot1 = sdCone(p + treeKnotDisplacement1, treeKnotAngles, treeKnotHeight);
-  float treeKnot2 = sdCone(p + treeKnotDisplacement2, treeKnotAngles, treeKnotHeight);
-  float treeKnot3 = sdCone(p + treeKnotDisplacement3, treeKnotAngles, treeKnotHeight);
-  float treeKnot4 = sdCone(p + treeKnotDisplacement4, treeKnotAngles, treeKnotHeight);
-  float treeTrunk = sdCappedCylinder(p, t.radius, t.height);
+    // tree knot sdf definitions
+    float treeKnot1 = sdCone(p + treeKnotDisplacement1, treeKnotAngles, treeKnotHeight);
+    float treeKnot2 = sdCone(p + treeKnotDisplacement2, treeKnotAngles, treeKnotHeight);
+    float treeKnot3 = sdCone(p + treeKnotDisplacement3, treeKnotAngles, treeKnotHeight);
+    float treeKnot4 = sdCone(p + treeKnotDisplacement4, treeKnotAngles, treeKnotHeight);
+    float treeTrunk = sdCappedCylinder(p, t.radius, t.height);
   
-  // smooth SDF between trunk and knots
-  float res = smin(treeTrunk, treeKnot1, treeKnotSmoothFactor);
-  res = smin(res, treeKnot2, treeKnotSmoothFactor);
-  res = smin(res, treeKnot3, treeKnotSmoothFactor);
-  res = smin(res, treeKnot4, treeKnotSmoothFactor);
+    // smooth SDF between trunk and knots
+    float res = smin(treeTrunk, treeKnot1, treeKnotSmoothFactor);
+    res = smin(res, treeKnot2, treeKnotSmoothFactor);
+    res = smin(res, treeKnot3, treeKnotSmoothFactor);
+    res = smin(res, treeKnot4, treeKnotSmoothFactor);
 
-  return res;
+    return res;
+  //}
+  //return MAX_FLT;
 }
 
 float forestSDF(vec3 queryPt){
   float minSDF = MAX_FLT;
 
-  for (int i = 0; i < TREES.length(); i++){
-    float rand = clamp(random2(vec2(i + 1, i)).x, 0.0, 1.0);
-    float rotZ = mix(-2.0, 2.0, rand);
-    float rotY = mix(-180.0, 180.0, rand);
-    minSDF = min(minSDF, treeSDF(queryPt, rotY, rotZ, TREES[i]));
+  if (inBB(queryPt, R_TREES_BB_LOW, R_TREES_BB_HIGH)){
+    for (int i = 0; i < R_TREES.length(); i++){
+      float rand = clamp(random2(vec2(i + 1, i)).x, 0.0, 1.0);
+      float rotZ = mix(-2.0, 2.0, rand);
+      float rotY = mix(-180.0, 180.0, rand);
+      minSDF = min(minSDF, treeSDF(queryPt, rotY, rotZ, R_TREES[i]));
+    }
   }
+  
+  for (int i = 0; i < L_TREES.length(); i++){
+      float rand = clamp(random2(vec2(i + 1, i)).x, 0.0, 1.0);
+      float rotZ = mix(-2.0, 2.0, rand);
+      float rotY = mix(-180.0, 180.0, rand);
+      minSDF = min(minSDF, treeSDF(queryPt, rotY, rotZ, L_TREES[i]));
+  }
+  
 
-  for (int i = 0; i < FAR_TREES.length(); i++){
-    minSDF = min(minSDF, fakeTreeSDF(queryPt, FAR_TREES[i]));
+  if (inBB(queryPt, FAR_TREES_BB_LOW, FAR_TREES_BB_HIGH)) {
+    for (int i = 0; i < FAR_TREES.length(); i++){
+      minSDF = min(minSDF, fakeTreeSDF(queryPt, FAR_TREES[i]));
+    }
+    //return 0.000001f;
   }
 
   return minSDF;
@@ -399,29 +432,28 @@ float columnSDF(vec3 queryPt, vec3 columnPos){
 float templeSDF(vec3 queryPt){
 
   vec3 templePos = rotateY(queryPt + TEMPLE_POS, TEMPLE_ROT_Y) / TEMPLE_SCALE;
-
   float minSDF = sdRoundBox(templePos, vec3(2.7, 0.15, 2.7), 0.05);
 
   // columns
-  float columnPadding = 1.8;
+    float columnPadding = 1.8;
 
-  // columns symmetrical around xz planes
-  minSDF = min(minSDF, columnSDF(opSymXZ(templePos), vec3(-columnPadding, -0.3, -columnPadding))); 
+    // columns symmetrical around xz planes
+    minSDF = min(minSDF, columnSDF(opSymXZ(templePos), vec3(-columnPadding, -0.3, -columnPadding))); 
 
-  // temple top
-  minSDF = min( minSDF, sdRoundBox(templePos + vec3(0.0, -3.1, 0.0), vec3(2.2, 0.13, 2.2), 0.05) );
-  minSDF = min( minSDF, sdRoundBox(templePos + vec3(0.0, -3.5, 0.0), vec3(2.5, 0.3, 2.5), 0.05) );
-  minSDF = min( minSDF, sdRoundBox(templePos + vec3(0.0, -4.1, 0.0), vec3(1.9, 0.3, 1.9), 0.05) );
-  minSDF = min( minSDF, sdRoundBox(templePos + vec3(0.0, -4.5, 0.0), vec3(1.5, 0.18, 1.5), 0.1) );
+    // temple top
+    minSDF = min( minSDF, sdRoundBox(templePos + vec3(0.0, -3.1, 0.0), vec3(2.2, 0.13, 2.2), 0.05) );
+    minSDF = min( minSDF, sdRoundBox(templePos + vec3(0.0, -3.5, 0.0), vec3(2.5, 0.3, 2.5), 0.05) );
+    minSDF = min( minSDF, sdRoundBox(templePos + vec3(0.0, -4.1, 0.0), vec3(1.9, 0.3, 1.9), 0.05) );
+    minSDF = min( minSDF, sdRoundBox(templePos + vec3(0.0, -4.5, 0.0), vec3(1.5, 0.18, 1.5), 0.1) );
 
-  return minSDF;
+    return minSDF;
 }
 
 float sceneSDF(vec3 queryPt, out int material_id, out bool terminateRaymarch) {
     bool isPath;
     terminateRaymarch = false;
 
-    float minSDF = queryPt.y - getTerrainHeight(queryPt.xz, isPath);
+    float minSDF = queryPt.y - getTerrainHeight(queryPt.xz, isPath, queryPt.y);
     minSDF = smin(minSDF, raisedGroundSDF(queryPt, 240.0, -3.0), 0.9);
     material_id = isPath ? PATH_MAT_ID : GROUND_MAT_ID;
 
@@ -450,7 +482,7 @@ float sceneSDF(vec3 queryPt, out int material_id, out bool terminateRaymarch) {
 // For normal calcs -- no material ids returned
 float sceneSDF(vec3 queryPt) {
     bool isPath;
-    float minSDF = queryPt.y - getTerrainHeight(queryPt.xz, isPath);
+    float minSDF = queryPt.y - getTerrainHeight(queryPt.xz, isPath, queryPt.y);
     minSDF = smin(minSDF, raisedGroundSDF(queryPt, 240.0, -3.0), 0.9);
     minSDF = min(minSDF, templeSDF(queryPt));
     return min(minSDF, forestSDF(queryPt));
@@ -497,6 +529,9 @@ Intersection getRaymarchedIntersection(vec2 uv) {
     int material_id = 0;
 
     for (int step = 0; step < MAX_RAY_STEPS; ++step){
+      if (dist_t > float(MAX_RAY_LENGTH)){
+        return isect;
+      }
       // raymarch
       vec3 queryPt = r.origin + dist_t * r.direction;
       float curDist = sceneSDF(queryPt, material_id, terminateRaymarch);
@@ -589,7 +624,7 @@ vec4 getMaterial(vec3 n, int material_id, float zDepth, vec3 isectPt){
   float diffuseTerm = 0.05;
 
   // calc shadow; if in shadow, add faint blue shadow
-  bool inShadow = isInShadow(isectPt + 0.005 * n);
+  bool inShadow = /*isInShadow(isectPt + 0.005 * n)*/ true;
 
   diffuseTerm = getDiffuseTerm(isectPt, n);
   
