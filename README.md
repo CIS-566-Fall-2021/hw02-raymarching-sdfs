@@ -1,7 +1,9 @@
 # CIS 566 Homework 2: Implicit Surfaces
 Author: Nathaniel Korzekwa
+
 PennKey: korzekwa
-[Live Demo](https://ciscprocess.github.io/hw01-noisy-planet/)
+
+[Live Demo](https://ciscprocess.github.io/hw02-raymarching-sdfs/)
 
 # Overview and Goal
 This project currently lays the technical foundation for what I hope to be a 
