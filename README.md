@@ -8,6 +8,8 @@ I chose to create an sdf scene based off an image of the golden gate bridge. I u
 ![](images/bridge.jpeg)
 
 ![](images/sdfBridge.png)
+
+my live link is https://emmaholthouser16.github.io/hw02-raymarching-sdfs/ but I am having trouble getting it to sync at the moment
 ## Objective
 - Gain experience with signed distance functions
 - Experiment with animation curves
