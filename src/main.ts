@@ -1,6 +1,4 @@
 import {vec2, vec3} from 'gl-matrix';
-import * as Stats from 'stats-js';
-import * as DAT from 'dat-gui';
 import Square from './geometry/Square';
 import OpenGLRenderer from './rendering/gl/OpenGLRenderer';
 import Camera from './Camera';
