@@ -425,7 +425,7 @@ vec3 computeMaterial(int hitObj, vec3 p, vec3 n) {
     vec3 color = albedo *
                  LIGHT_COLOR *
                  max(0.0, dot(n, LIGHT_DIR)) *
-                 softShadow(LIGHT_DIR, p, 0.15, hitObj);
+                 softShadow(LIGHT_DIR, p, 0.1, hitObj);
 
     return color;
 }
