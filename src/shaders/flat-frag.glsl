@@ -202,9 +202,9 @@ float sdCables(vec3 p, vec3 offset, mat3 transform)
    // vec3 newP = opRepLim(p, .5f, vec3(0.f, 0.f, 1.f));
     vec3 newP = opSymX(p);
     float topCable = sdCappedTorus(p, c, 13.f,.03f);
-    topCable = min(topCable, sdVerticalCables(p, vec3(0.f, 10.f, 0.f), identity()));
-    topCable = min(topCable, sdVerticalCables(p, vec3(0.f, 10.f, .5f), identity()));
-    topCable = min(topCable, sdCappedTorus((p - vec3(0.f, 0.f, .5f)), c, 13.f, .03f));
+    topCable = smin(topCable, sdVerticalCables(p, vec3(0.f, 10.f, 0.f), identity()), .08);
+    topCable = smin(topCable, sdVerticalCables(p, vec3(0.f, 10.f, .5f), identity()), .08);
+    topCable = smin(topCable, sdCappedTorus((p - vec3(0.f, 0.f, .5f)), c, 13.f, .03f), .08);
    // topCable = min(topCable, sdCappedTorus((p - vec3(5.f, 0.f, 0.f)), c, 13.f, .03f));
     //subraction sphere
     p = p * (1.f / vec3(1.6f, 1.f, 1.f));
@@ -237,7 +237,6 @@ float rock(vec3 pos, vec3 offset, mat3 transform)
    float rock = sdRoundBox(pos, vec3(-2.f, -1.5f, 6.5f), rotateZ(-2.f * RADIANS) * rotateX(-10.f * RADIANS), vec3(.5f, .5f, 1.f), .15);
    float curvePart = sdRoundBox(pos, vec3(-1.f, -1.7f, 6.5f), rotateZ(20.f * RADIANS) * rotateX(-10.f * RADIANS), vec3(.6f, .5f, 1.f), .15);
    return smin(rock, curvePart, .25);
-   //return rock;
 }
 float sdRoadSide(vec3 pos, vec3 offset, mat3 transform)
 {
