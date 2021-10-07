@@ -27,6 +27,8 @@ struct Intersection
     int material_id;
 };
 
+
+const vec3 LIGHT_DIR = vec3(-1.0, 1.0, 2.0);
 //******* Data End*******/
 mat4 rotation3d(vec3 axis, float angle) {
   axis = normalize(axis);
@@ -56,7 +58,10 @@ float smax( float a, float b, float k )
     float h = max(k-abs(a-b),0.0);
     return max(a, b) + h*h*0.25/k;
 }
-
+float sdfPlane(vec3 query_position, float h)
+{
+    return query_position.y - h;
+}
 float boxSDF( vec3 query_position, vec3 r )
 {
     return length( max(abs(query_position)-r,0.0) );
@@ -67,6 +72,7 @@ float sphereSDF(vec3 query_position, vec3 position, float radius)
 }
 float ringSDF(vec3 p){
     float d = abs(length(p.xz)-0.2)-0.03; 
+    
     d = smax(d,abs(p.y)-0.03,0.01);// minus height of ring
     return d;
 }
@@ -93,41 +99,32 @@ float differenceSDF(float distA, float distB) {
 
 /******* SceneSDF *******/
 
-mat3 setCamera( vec3 ro, vec3 ta, float cr )
-{
-	vec3 cw = normalize(ta-ro);
-	vec3 cp = vec3(sin(cr), cos(cr),0.0);
-	vec3 cu = normalize( cross(cw,cp) );
-	vec3 cv =          ( cross(cu,cw) );
-    return mat3( cu, cv, cw );
-}
 
 #define GEAR_SECTOR 12.0
-float gear(vec3 p) {
-
-    float t = 0.01*u_Time;
-    
-    p.xz = mat2(cos(t),-sin(t),
-                sin(t),cos(t)) * p.xz;
+float gearSDF(vec3 p, float speed)
+{
+    // float t = speed*0.05*sin(0.1*u_Time);
+    // p.xy = mat2(cos(t),-sin(t),
+    //            sin(t),cos(t)) * p.xy;
     //gear teeth calculation
-    float angle_sector = PI2/GEAR_SECTOR;
-    float ang = atan(p.z,p.x);
-    float sector = round(ang/angle_sector);
-    vec3 q = p;
-    float an = sector*angle_sector;
-    q.xz = mat2(cos(an),-sin(an),
-                sin(an),cos(an)) * q.xz;
+    int numTeeth = 12;
+    float w = 0.25;
+    float lpxy=length(p.xy);
+    float d=10000.;
+    float ang=atan(p.y,p.x);
+    float outer_radius = 0.8;
+    float height = 0.1;
+    float inner_radius = 0.5;
 
-    // box maded gear teeth
-    //float d1 = boxSDF(q-vec3(1.8,0.,0.),vec3(0.2+0.4*abs(sin(0.01*u_Time))*sin((ang-an)/angle_sector*PI2+PI2/4.0),0.18,0.34))-0.06;
-    float d1 = boxSDF(q-vec3(0.25,0.,0.),vec3(0.04,0.03,0.05))-0.001;
-
-    // ring shape
-    float d2 = ringSDF(p);
-    d2 = unionSDF(d1,d2);
-    return d2;
+    d=min(d,length(p+vec3(p.xy/lpxy,0)*.1*sin(ang*GEAR_SECTOR))-outer_radius);
+    d=max(d,abs(p.z)-height);
+    d=max(d,inner_radius-lpxy);
+    return d;
 }
-#define GEAR_NUM 6.0
+vec4 inverseQuat(vec4 q)
+{
+    return vec4(-q.xyz,q.w);
+}
 
 vec4 multQuat(vec4 a, vec4 b)
 {
@@ -143,27 +140,59 @@ vec4 axAng2Quat(vec3 ax, float ang)
 {
     return vec4(normalize(ax),1)*sin(vec2(ang*.5)+vec2(0,PI2*.25)).xxxy;
 }
+#define Z_AXIS vec3(0.0,0.0,1.0)
+#define X_AXIS vec3(1.0,0.0,0.0)
+#define Y_AXIS vec3(0.0,1.0,1.0)
+float gearRepeat(vec3 p){
 
-float gearRing(vec3 p){
-
-    float d = MAX_DIS;
-    float dang=PI2/(12.0);
-    float s = 1.0;
-    float R = 6.0* 0.5 / PI2;
-    for(int i = 0; i<12;i++){
-        float ang = float(i)*dang;
-        vec3 pos=vec3(cos(ang)*R,sin(ang)*R,0);
-
-    }
-    return d;
+    vec3 p1 = p;
+    vec4 q1 = axAng2Quat(Z_AXIS,0.05*u_Time);
+    vec4 q2 = axAng2Quat(X_AXIS,PI2/2.*sin(0.01*u_Time));
+    q2 = multQuat(q1,q2);
+    p1 = transformVecByQuat(p1,q2);
+    float g1 = gearSDF(p1,1.0);
+    float dis = 1.55;
+    vec3 p2 = p - vec3(dis,0.0,0.0);
+    q1 = axAng2Quat(Z_AXIS,-0.05*u_Time);
+    q2 = axAng2Quat(X_AXIS,PI2/2.*sin(0.01*u_Time));
+    q2 = multQuat(q1,q2);
+    p2 = transformVecByQuat(p2,q2);
+    float g2 = gearSDF(p2,-1.0);
+    
+    vec3 p3 = p + vec3(dis,0.0,0.0);
+    p3 = transformVecByQuat(p3,q2);
+    float g3 = gearSDF(p3,-1.0);
+    return min(g1,min(g2,g3));
 }
 float sceneSDF(vec3 p){
-
-    // gear teeth calculation
-    float d = gearRing(p);
-
-    return d;
+    float s = sdfPlane(p,-4.0);
+    float size =  3.1;
+    
+    float mod_z = mod(p.z,2.0)-1.0;
+    float rot = floor(abs(p.z/2.0));
+    vec4 q = axAng2Quat(Z_AXIS,PI2/8.0*rot);
+    p = transformVecByQuat(p,q);
+    float mod_x = mod(p.x,size)-size/2.;
+    vec3 mod_p = vec3(mod_x,p.y,mod_z);
+    return min(gearRepeat(mod_p),s);
+    
 }
+
+float hardShadow(vec3 rayOrigin, vec3 rayDirection, float minT, float maxT)
+{
+    for(float t = minT; t < maxT; )
+    {
+        float h = sceneSDF(rayOrigin + rayDirection * t);
+        if(h < EPSILON)
+        {
+            return 0.0;
+        }
+        t += h;
+    }
+
+    return 1.0;
+}
+
 /******* SceneSDF End*******/
 
 /******* Ray march*******/
@@ -206,12 +235,14 @@ Intersection getRaymarchedIntersection(vec2 uv)
 
     for (int i = 0; i < MAX_MARCHING_STEPS; i++) {
         vec3 p = r.origin + depth * r.direction;
+        
         float dist = sceneSDF(p);
         if (dist < EPSILON) {
             // We're inside the scene surface!
             intersection.position = p;
             intersection.distance_t = depth;
-            intersection.normal = estimateNormal(p);// to be done: calculate normal
+            if(intersection.material_id==0)
+                intersection.normal = estimateNormal(p);
             return intersection;
         }
         // Move along the view ray
@@ -231,6 +262,7 @@ vec3 phongContribForLight(vec3 k_d, vec3 k_s, float alpha, vec3 p, vec3 eye,
     float dotLN = dot(L, N);
     float dotRV = dot(R, V);
     
+    float shadowFactor = hardShadow(p, normalize(LIGHT_DIR), EPSILON * 100.0, 10.0);
     if (dotLN < 0.0) {
         // Light not visible from this point on the surface
         return vec3(0.0, 0.0, 0.0);
@@ -241,27 +273,18 @@ vec3 phongContribForLight(vec3 k_d, vec3 k_s, float alpha, vec3 p, vec3 eye,
         // component
         return lightIntensity * (k_d * dotLN);
     }
-    return lightIntensity * (k_d * dotLN + k_s * pow(dotRV, alpha));
+    return lightIntensity * (k_d * dotLN * shadowFactor + k_s * pow(dotRV, alpha));
 }
 
 /**
  * Lighting via Phong illumination.
- * 
- * The vec3 returned is the RGB color of that point after lighting is applied.
- * k_a: Ambient color
- * k_d: Diffuse color
- * k_s: Specular color
- * alpha: Shininess coefficient
- * p: position of point being lit
- * eye: the position of the camera
- *
- * See https://en.wikipedia.org/wiki/Phong_reflection_model#Description
+ * https://en.wikipedia.org/wiki/Phong_reflection_model#Description
  */
 vec3 phongIllumination(vec3 k_a, vec3 k_d, vec3 k_s, float alpha, vec3 p, vec3 eye) {
     const vec3 ambientLight = 0.5 * vec3(1.0, 1.0, 1.0);
     vec3 color = ambientLight * k_a;
     
-    vec3 light1Pos = vec3(4.0 * sin(0.01*u_Time),
+    vec3 light1Pos = vec3(-4.0 * sin(0.01*u_Time),
                           2.0,
                           4.0 * cos(0.01*u_Time));
     vec3 light1Intensity = vec3(0.4, 0.4, 0.4);
@@ -270,10 +293,8 @@ vec3 phongIllumination(vec3 k_a, vec3 k_d, vec3 k_s, float alpha, vec3 p, vec3 e
                                   light1Pos,
                                   light1Intensity);
     
-    vec3 light2Pos = vec3(2.0 * sin(0.02 * u_Time),
-                          2.0 * cos(0.02 * u_Time),
-                          2.0);
-    vec3 light2Intensity = vec3(0.4, 0.4, 0.4);
+    vec3 light2Pos = vec3(20.*sin(0.01*u_Time),20.*sin(0.01*u_Time),20.*sin(0.01*u_Time));
+    vec3 light2Intensity = vec3(2.0);
     
     color += phongContribForLight(k_d, k_s, alpha, p, eye,
                                   light2Pos,
@@ -292,16 +313,18 @@ void main() {
       out_Col=vec4(1.0);
   }
   else{
-    // blinn-phong test! 
-    //   vec3 p = eye + i.distance_t * dir;
-    //   vec3 K_a = vec3(0.2, 0.2, 0.2);
-    //   vec3 K_d = vec3(0.7, 0.2, 0.2);
-    //   vec3 K_s = vec3(1.0, 1.0, 1.0);
-    //   float shininess = 10.0;
+    // Blinn-phong
+       vec3 p = eye + i.distance_t * dir;
+       vec3 K_a = vec3(0.3255, 0.1294, 0.1294);
+       vec3 K_d = vec3(0.7, 0.2, 0.2);
+       vec3 K_s = vec3(1.0, 1.0, 1.0);
+       float shininess = 10.0;
         
-    //   vec3 color = phongIllumination(K_a, K_d, K_s, shininess, p, eye);
-    
-    vec3 col = 0.5 + 0.5*i.normal;
-    out_Col = vec4(col, 1.0);
+      vec3 color = phongIllumination(K_a, K_d, K_s, shininess, p, eye);
+     //Lambertian Shading
+
+      vec3 col = color;
+     out_Col = vec4(col, 1.0);
   }
+  
 }
