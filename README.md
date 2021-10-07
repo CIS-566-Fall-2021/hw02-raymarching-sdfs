@@ -5,11 +5,14 @@ Name: Eddie Huang
 PennKey: huanged
 
 Part 1:
-![]Normals.png
+
+![](Normals.png)
 
 Part 2:
-![]Pic1.png
-![]Pic2.png
+
+![](Pic1.png)
+
+![](Pic2.png)
 
 
 ## Objective
