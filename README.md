@@ -1,5 +1,19 @@
 # CIS 566 Homework 2: Implicit Surfaces
 
+Di Lu 
+
+dlu36
+
+Title: ONLY I WILL PREVAIL
+
+![](DONE.png)
+
+Soup Son Face
+
+![](DONEFLAT.png)
+
+Normal Soup Bowl
+
 ## Objective
 - Gain experience with signed distance functions
 - Experiment with animation curves
