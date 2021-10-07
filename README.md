@@ -5,6 +5,8 @@
 ## link to scene
 [https://ruthchu.github.io/hw02-raymarching-sdfs/](https://ruthchu.github.io/hw02-raymarching-sdfs/)
 
+## static image!
+
 ![](images/kirbyrender.png)
 
 gif to see the animation (gif is not slowed down, my project is just very slow)
