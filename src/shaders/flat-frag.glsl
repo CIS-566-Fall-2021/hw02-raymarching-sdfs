@@ -8,7 +8,7 @@ uniform float u_Time;
 in vec2 fs_Pos;
 out vec4 out_Col;
 
-const int MAX_RAY_STEPS = 128;
+const int MAX_RAY_STEPS = 30;
 const float FOV = 45.0;
 const float EPSILON = 1e-5;
 
@@ -32,6 +32,11 @@ struct Intersection
     float distance_t;
     int material_id;
 };
+
+float sdSphere( vec3 p, float s )
+{
+  return length(p)-s;
+}
 
 float sdEllipsoid( vec3 p, vec3 r )
 {
@@ -196,9 +201,13 @@ float kirbyStarSDF(vec3 queryPos) {
 
 float sceneSDF(vec3 queryPos) 
 {
-    vec3 shaking = vec3(sin(u_Time * .2) * .1, cos(u_Time * .4) * .1, sin((u_Time + 100.0) * .3));
-    float kirbyStar = kirbyStarSDF(queryPos + shaking);
-    return kirbyStar;
+    float boundSphere = sdSphere(queryPos, 3.0);
+    if (boundSphere <= EPSILON) {
+        vec3 shaking = vec3(sin(u_Time * .2) * .1, cos(u_Time * .4) * .1, sin((u_Time + 100.0) * .3));
+        float kirbyStar = kirbyStarSDF(queryPos + shaking);
+        return kirbyStar;
+    }
+    return 1.0;
 }
 
 Ray getRay(vec2 uv)
@@ -246,11 +255,12 @@ Intersection getRaymarchedIntersection(vec2 uv)
     
     intersection.distance_t = -1.0;
     float t = 0.0;
+    float currDist;
 
     for (int step = 0; step < MAX_RAY_STEPS; ++step) {
         vec3 queryPos = ray.origin + ray.direction * t;
-        float currDist = sceneSDF(queryPos);
-        if (currDist < EPSILON) {
+            float currDist = sceneSDF(queryPos);
+            if (currDist < EPSILON) {
             intersection.distance_t = t;
             intersection.normal = getNormal(queryPos);
             intersection.position = queryPos;

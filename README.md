@@ -9,7 +9,7 @@
 
 ![](images/kirbyrender.png)
 
-gif to see the animation (gif is not slowed down, my project is just very slow)
+gif to see the animation
 ![](images/kirby.gif)
 
 ## techniques used
@@ -19,8 +19,11 @@ kirby + star
 - star is made of 5 rhombii rotated around a center point, and smoothblended with an ellipse to create the bulge in the center
 - kirby is animated to bob up and down using a sin function, which is then modified by gain and bias to give more "elasticity" to the bounce
 - arms are also animated in this way
-- feet are fixed to ground
-- entire sdf moves randomly
+- feet are fixed to star
+- entire sdf bobs around using sin/cosin functions with time input
+optimization
+- used a static bounding sphere to restrict the area where rays are being compared against SDFs
+- bounded the ray steps to the most minimal value that would still allow for complete rendering of geometry
 
 ## useful external resources
 - referenced the heck out of this page:
