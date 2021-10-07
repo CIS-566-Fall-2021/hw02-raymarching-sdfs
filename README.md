@@ -1,5 +1,27 @@
 # CIS 566 Homework 2: Implicit Surfaces
 
+## Submission
+
+Name: Felicity Yick
+Pennkey: feliyick
+
+Link: https://feliyick.github.io/hw02-raymarching-sdfs/
+
+Screenshot: 
+
+![rapunzelTower_Sdf](https://user-images.githubusercontent.com/59979404/136284364-13359e57-8b1c-463d-94a1-c7eb2056368d.PNG)
+
+
+Reference Image:
+
+![rapunzelTower](https://user-images.githubusercontent.com/59979404/136284434-f7997759-83a2-485a-a61f-506c6244440e.png)
+
+Features
+- Rapunzel's tower constructed using smoothUnioned and transformed SDFs
+- Hard shadows and basic lambertian reflection
+- Animated flying 'birds'; Body and wing movement controlled using bias and sin functions. 
+- Around 12fps when plugged into my monitor. Around 1fps when not :(
+
 ## Objective
 - Gain experience with signed distance functions
 - Experiment with animation curves
