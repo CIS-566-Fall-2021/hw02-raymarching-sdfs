@@ -10,6 +10,7 @@
 ![](images/kirbyrender.png)
 
 gif to see the animation
+
 ![](images/kirby.gif)
 
 ## techniques used
