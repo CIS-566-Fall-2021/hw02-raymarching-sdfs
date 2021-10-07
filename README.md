@@ -6,7 +6,6 @@ https://gserena01.github.io/hw02-raymarching-sdfs/
 
 ![image](https://user-images.githubusercontent.com/60444726/135357472-5eee50be-b314-4483-a183-6a38e9705ef8.png)
 
-![image](https://user-images.githubusercontent.com/60444726/135357390-3b6d8b3b-7ff7-449a-8e14-d7ec2f718df0.png)
 
 
 # Overview:
