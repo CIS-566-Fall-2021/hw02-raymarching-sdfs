@@ -27,8 +27,12 @@ const vec3 LIGHT_DIR_2 = vec3(-1.0, 1.0, -1.0);
 
 // The higher the value, the smaller the penumbra
 const float SHADOW_HARDNESS = 7.0;
+// 0 for no, 1 for yes
+#define SHADOW 1
+#define ANIMATION 1
 // 0 for penumbra shadows, 1 for hard shadows
 #define HARD_SHADOW 0
+
 
 struct Ray 
 {
@@ -99,10 +103,12 @@ float displacement(vec3 p)
     // return 2. * (1. - ease_in_out_quadratic(sin(.5*p.x)*cos(.5*p.y)*sin(.5*p.z)));
 
     //with easing
+    #if ANIMATION
     float u_Time_new = ease_in_out_quadratic(sin(u_Time / 50.) * 20.);
     p[0] += u_Time_new / 100.;
     p[1] += u_Time_new / 80.;
     p[2] += u_Time_new / 120.;
+    #endif
     return sin(.5*p.x)*cos(.5*p.y)*sin(.5*p.z);
 }
 
@@ -434,7 +440,11 @@ vec3 getSceneColor(vec2 uv)
         // return finalColor;
         
         // + intersection.normal * .001
+        #if SHADOW
         return getLambertColor(intersection, LIGHT_COL_1, LIGHT_DIR_1, .2) * shadow(LIGHT_DIR_1, intersection.position + normalize(intersection.normal) * EPSILON, .1);
+        #else
+        return getLambertColor(intersection, LIGHT_COL_1, LIGHT_DIR_1, .2);
+        #endif
      }
      return vec3(0.0f);
 }
