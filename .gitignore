@@ -59,3 +59,7 @@ typings/
 
 # next.js build output
 .next
+
+#add distribution bundle
+dist/bundle.js
+dist/bundle.js.map
