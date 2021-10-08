@@ -98,13 +98,13 @@ function main() {
   window.addEventListener('resize', function() {
     renderer.setSize(window.innerWidth, window.innerHeight);
     camera.setAspectRatio(window.innerWidth / window.innerHeight);
-    camera.updateProjectionMatrix();
+    //camera.updateProjectionMatrix();
     flat.setDimensions(window.innerWidth, window.innerHeight);
   }, false);
 
   renderer.setSize(window.innerWidth, window.innerHeight);
   camera.setAspectRatio(window.innerWidth / window.innerHeight);
-  camera.updateProjectionMatrix();
+  //camera.updateProjectionMatrix();
   flat.setDimensions(window.innerWidth, window.innerHeight);
 
   // Start the render loop
