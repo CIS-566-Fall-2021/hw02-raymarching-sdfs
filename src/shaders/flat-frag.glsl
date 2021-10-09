@@ -7,9 +7,13 @@ precision highp float;
 #define MAT_GROUND 0
 #define MAT_HILL 1
 
-#define SUN_KEY_LIGHT vec3(0.67, 0.84, 0.902) * 1.5
-#define SKY_FILL_LIGHT vec3(0.2, 0.7, 1.0) * 0.2
-#define SUN_AMBIENT_LIGHT vec3(0.67, 0.84, 0.902) * 2.0
+// High Dynamic Range
+#define SUN_KEY_LIGHT vec3(0.6, 1.0, 0.4) * 1.5
+// Fill light is sky color, fills in shadows to not be black
+#define SKY_FILL_LIGHT vec3(0.7, 0.2, 0.7) * 0.2
+// Faking global illumination by having sunlight
+// bounce horizontally only, at a lower intensity
+#define SUN_AMBIENT_LIGHT vec3(0.6, 1.0, 0.4) * 0.2
 #define GAMMA 1
 
 uniform vec3 u_Eye, u_Ref, u_Up;
@@ -20,8 +24,9 @@ in vec2 fs_Pos;
 out vec4 out_Col;
 const int MIN_RAY_STEPS = 0;
 const int MAX_RAY_STEPS = 128;
+// const int MAX_RAY_STEPS = 100;
 const float FOV = 45.0;
-const float EPSILON = 1e-6;
+const float EPSILON = 1e-3;
 
 // const vec3 EYE = vec3(0.0, 0.0, 10.0);
 const vec3 ORIGIN = vec3(0.0, 0.0, 0.0);
@@ -72,6 +77,12 @@ float planeSDF(vec3 queryPos, float height)
     return queryPos.y - height;
 }
 
+float sdBox(vec3 p, vec3 b)
+{
+    vec3 q = abs(p) - b;
+    return length(max(q, 0.0)) + min(max(q.x, max(q.y, q.z)), 0.0);
+}
+
 float capsuleSDF( vec3 queryPos, vec3 a, vec3 b, float r )
 {
     vec3 pa = queryPos - a, ba = b - a;
@@ -105,49 +116,99 @@ float smin( float a, float b, float k )
 float hemisphere(vec3 p, float r)
 {
     float sphere = sdSphere(p, r);
-    float plane = planeSDF(p, 0.f);
+    float plane = planeSDF(p, 0.0);
+    return smoothSubtraction(plane, sphere, 0.25f);
+}
+
+float hill(vec3 p, float r, float plane)
+{
+    float sphere = sdSphere(p, r);
     return smoothSubtraction(plane, sphere, 0.25f);
 }
 
 hitObj sceneSDF(vec3 queryPos)
 {
-    // float dGround = heightField(queryPos, 0.0f);
-    // return dGround;
-    // float s1 = sdfSphere(queryPos, vec3(-2.f, -3.f, 0.f), 2.5);
     hitObj obj = hitObj(-1.f, -1);
 
-    // float hillCenter = sdSphere(queryPos - vec3(0.f, 0.f, 20.f), 2.0f);
-    float hillCenter = hemisphere(queryPos - vec3(0.f, 0.f, 10.f), 2.0f);
-    float finalDist = hillCenter;
-    int finalMat = MAT_HILL;
-    float tempDist;
+    float groundY = -2.0;
+    float ground = planeSDF(queryPos - vec3(0.0, groundY, 0.0), 0.0f);
+    
+    float finalDist = ground;
+    int finalMat = MAT_GROUND;
 
-    float hillLeft1 = sdSphere(queryPos - vec3(-0.75f, 0.f, 15.f), 1.75);
-    // if (hillLeft1 < finalDist) {
-    //     finalDist = smoothUnion(finalDist, hillLeft1, 0.25f);
-    //     finalMat = MAT_HILL;
-    // }
-    float ground = planeSDF(queryPos, -0.5f);
-    finalDist = smoothUnion(ground, finalDist, 0.25f);
-    // if (ground < finalDist) {
-    //     finalDist = smoothUnion(finalDist, ground, 0.25f);
-    //     finalMat = MAT_GROUND;
-    // }
-    // finalDist = smoothUnion
+    float hillCenterRad = 20.0;
+    float hillCenter = hemisphere(queryPos - vec3(0.0, groundY - hillCenterRad / 2.0, hillCenterRad + 20.0), hillCenterRad);
+    if (hillCenter < finalDist) {
+        finalMat = MAT_HILL;
+    }
+    finalDist = smoothUnion(finalDist, hillCenter, 0.25f);
 
+    float hillLeftRad1 = 15.0;
+    float hillLeft1 = hemisphere(queryPos - vec3(-10.0 - 3.0, groundY - 11.0, 19.0 + 4.5), hillLeftRad1);
+    if (hillLeft1 < finalDist) {
+        finalMat = MAT_HILL;
+    }
+    // finalDist = smoothUnion(finalDist, hillLeft1, 0.25f);
+
+    float hillLeftBudRad1 = 12.5;
+    float hillLeftBud1 = hemisphere(queryPos - vec3(-10.0 - 3.0, groundY - 9.2, 13.5 + 4.), hillLeftBudRad1);
+    if (hillLeftBud1 < finalDist) {
+        finalMat = MAT_HILL;
+    }
+    finalDist = smoothUnion(finalDist, smin(hillLeft1, hillLeftBud1, 0.25), 0.25f);
+
+    float hillLeftRad2 = 12.0;
+    float hillLeft2 = hemisphere(queryPos - vec3(-11.0 - 3.0, groundY - 9.5, 8.5), hillLeftRad2);
+    if (hillLeft2 < finalDist) {
+        finalMat = MAT_HILL;
+    }
+    // finalDist = smoothUnion(finalDist, hillLeft2, 0.25f);
+
+    float hillLeftRadBud2 = 8.0;
+    float hillLeftBud2 = hemisphere(queryPos - vec3(-8.7 - 3.0, groundY - 5.61, 3.5), hillLeftRadBud2);
+    if (hillLeftBud2 < finalDist) {
+        finalMat = MAT_HILL;
+    }
+    finalDist = smoothUnion(finalDist, smin(hillLeft2, hillLeftBud2, 0.25f), 0.25f);
+
+    float hillLeftBackRad1 = 10.0;
+    float hillLeftBack1 = hemisphere(queryPos - vec3(-26.45, groundY - 5.0, 21.0), hillLeftBackRad1);
+    if (hillLeftBack1 < finalDist) {
+        finalMat = MAT_HILL;
+    }
+    finalDist = smoothUnion(finalDist, hillLeftBack1, 0.25f);
+
+    float hillLeftBackRad2 = 15.0;
+    float hillLeftBack2 = hemisphere(queryPos - vec3(-26.95, groundY - 10.0, 15.0), hillLeftBackRad2);
+    if (hillLeftBack2 < finalDist) {
+        finalMat = MAT_HILL;
+    }
+    finalDist = smoothUnion(finalDist, hillLeftBack2, 0.25f);
+
+    float hillLeftFrontRad = 10.0;
+    float hillLeftFront = hemisphere(queryPos - vec3(-5.9 - 3.0, groundY - 8.45, -5.0), hillLeftFrontRad);
+    if (hillLeftFront < finalDist) {
+        finalMat = MAT_HILL;
+    }
+    finalDist = smoothUnion(finalDist, hillLeftFront, 0.25f);
+
+    float hillRightRad1 = 15.0;
+    float hillRight1 = hemisphere(queryPos - vec3(13.0, groundY - 11.0, 19.0 + 4.5), hillRightRad1);
+    if (hillRight1 < finalDist) {
+        finalMat = MAT_HILL;
+    }
+    // finalDist = smoothUnion(finalDist, hillRight1, 0.25f);
+    
+    float hillRightBudRad1 = 12.5;
+    float hillRightBud1 = hemisphere(queryPos - vec3(13.5, groundY - 9.2, 13.5 + 4.), hillRightBudRad1);
+    if (hillRightBud1 < finalDist) {
+        finalMat = MAT_HILL;
+    }
+    finalDist = smoothUnion(finalDist, smin(hillRight1, hillRightBud1, 0.25), 0.25f);
+    
     obj.distance_t = finalDist;
     obj.material_id = finalMat;
     return obj;
-    // return sdfSphere(queryPos, vec3(0.0, 0.0, 0.0), 0.2);
-    // return smin(sdfSphere(queryPos, vec3(0.0, 0.0, 0.0), 0.2),
-                // sdfSphere(queryPos, vec3(cos(u_Time) * 2.0, 0.0, 0.0), abs(cos(u_Time))), 0.2);
-    // return smin(dGround,
-    //             sdfSphere(queryPos, vec3(cos(u_Time) * 2.0, -1.0, -5.0), 1.0), 0.2);
-    // return min(dGround,
-                // sdfSphere(queryPos, vec3(cos(u_Time) * 2.0, -1.0, -5.0), 1.0));
-    // return sdfSphere(queryPos, vec3(cos(u_Time) * 2.0, -1.0, 0.0), 1.0);
-    // return dGround;
-    
 }
 
 Ray getRay(vec2 uv)
@@ -159,7 +220,7 @@ Ray getRay(vec2 uv)
     vec3 camera_UP = cross(camera_RIGHT, look);
     
     float aspect_ratio = u_Dimensions.x / u_Dimensions.y;
-    vec3 screen_vertical = u_Up * tan(FOV); 
+    vec3 screen_vertical = u_Up * tan(FOV);
     vec3 screen_horizontal = camera_RIGHT * aspect_ratio * tan(FOV);
     vec3 screen_point = (look + uv.x * screen_horizontal + uv.y * screen_vertical);
     
@@ -167,6 +228,23 @@ Ray getRay(vec2 uv)
     r.direction = normalize(screen_point - u_Eye);
    
     return r;
+}
+
+Ray getRay2(vec2 uv)
+{
+    Ray ray;
+    
+    float len = tan(3.14159 * 0.125) * distance(u_Eye, u_Ref);
+    vec3 H = normalize(cross(vec3(0.0, 1.0, 0.0), u_Ref - u_Eye));
+    vec3 V = normalize(cross(H, u_Eye - u_Ref));
+    V *= len;
+    H *= len * u_Dimensions.x / u_Dimensions.y;
+    vec3 p = u_Ref + uv.x * H + uv.y * V;
+    vec3 dir = normalize(p - u_Eye);
+    
+    ray.origin = u_Eye;
+    ray.direction = dir;
+    return ray;
 }
 
 vec3 estimateNorm(vec3 p)
@@ -184,7 +262,7 @@ Intersection getRaymarchedIntersection(vec2 uv)
     Intersection intersection;
     
     intersection.distance_t = -1.0;
-    Ray ray = getRay(uv);
+    Ray ray = getRay2(uv);
     float distance_t = 0.f;
     for (int step = MIN_RAY_STEPS; step < MAX_RAY_STEPS; ++step) {
         vec3 queryPoint = ray.origin + ray.direction * distance_t;
@@ -223,42 +301,31 @@ vec3 palette( in float t, in vec3 a, in vec3 b, in vec3 c, in vec3 d )
 vec3 getSceneColor(vec2 uv)
 {
     Intersection intersection = getRaymarchedIntersection(uv);
-    Ray lightRay = Ray(LIGHT_DIR, LIGHT_ORIGIN);
-    // if (intersection.distance_t > 0.0)
-    // {
-    //     return intersection.normal;
-    // }
-    if (intersection.distance_t > 0.0)
-    {
-    //     vec3 albedo = vec3(softShadow(lightRay.origin, lightRay.direction, float(MIN_RAY_STEPS), float(MAX_RAY_STEPS), 2.f));
-        vec3 albedo = vec3(1.f);
-        vec3 light_vec = normalize(LIGHT_DIR - intersection.position);
-        return albedo * max(0.1, dot(light_vec, estimateNorm(intersection.position)));
-        // vec3 diffuseColor = vec3(1.0);
+    
+    DirectionalLight lights[3];
 
-        // // Calculate the diffuse term for Lambert shading
-        // float diffuseTerm = dot(normalize(intersection.normal), normalize(light_vec));
-        // // Avoid negative lighting values
-        // diffuseTerm = clamp(diffuseTerm, 0.0, 1.0);
+    vec3 lightDir0 = vec3(-15.0, 3.0, 10.0);
+    vec3 lightDir1 = vec3(0.0, 1.0, 0.0);
+    vec3 lightDir2 = vec3(15.0, 0.0, 10.0);
+    lights[0] = DirectionalLight(normalize(lightDir0), SUN_KEY_LIGHT);
+    lights[1] = DirectionalLight(normalize(lightDir1), SUN_KEY_LIGHT);
+    lights[2] = DirectionalLight(normalize(lightDir2), SUN_KEY_LIGHT);
 
-        // float ambientTerm = 0.2;
+    vec3 backCol = SUN_KEY_LIGHT;
+    vec3 albedo = vec3(0.5);
+    vec3 n = estimateNorm(intersection.position);
 
-        // float lightIntensity = diffuseTerm + ambientTerm;   //Add a small float value to the color multiplier
-        //                                                     //to simulate ambient lighting. This ensures that faces that are not
-        //                                                     //lit by our point light are not completely black.
-
-        // // Compute final shaded color
-        // return vec3(diffuseColor * lightIntensity);
+    vec3 color = albedo * lights[0].col * max(0.0, dot(n, lights[0].dir));
+    if (intersection.distance_t > 0.0) { 
+        for(int i = 1; i < 3; ++i) {
+            color += albedo * lights[i].col * max(0.0, dot(n, lights[i].dir));
+        }
     }
-    vec3 a = vec3(0.000, 0.500, 0.500);
-    vec3 b = vec3(0.000, 0.500, 0.500);
-    vec3 c = vec3(0.000, 0.218, -0.002);
-    vec3 d = vec3(0.000, -0.032, 0.028);
-    vec3 back_col = palette(distance(uv, LIGHT_ORIGIN.xy), a, b, c, d);
-    #if GAMMA
-    back_col = pow(back_col, vec3(1.f, 1.f, 1. / 2.2));
-    #endif
-    return back_col;
+    else {
+        color = vec3(0.5, 0.7, 0.9);
+    }
+    color = pow(color, vec3(1. / 2.2));
+    return color;
 }
 
 void main() {
