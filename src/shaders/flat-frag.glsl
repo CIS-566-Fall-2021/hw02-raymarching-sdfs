@@ -206,6 +206,41 @@ hitObj sceneSDF(vec3 queryPos)
     }
     finalDist = smoothUnion(finalDist, smin(hillRight1, hillRightBud1, 0.25), 0.25f);
     
+    float hillRightRad2 = 12.3;
+    float hillRight2 = hemisphere(queryPos - vec3(14.0, groundY - 9.5, 8.5), hillRightRad2);
+    if (hillRight2 < finalDist) {
+        finalMat = MAT_HILL;
+    }
+    // finalDist = smoothUnion(finalDist, hillRight2, 0.25f);
+
+    float hillRightRadBud2 = 5.0;
+    float hillRightBud2 = hemisphere(queryPos - vec3(10.15, groundY - 2.41, 2.5), hillRightRadBud2);
+    if (hillRightBud2 < finalDist) {
+        finalMat = MAT_HILL;
+    }
+    finalDist = smoothUnion(finalDist, min(hillRight2, hillRightBud2), 0.25f);
+
+    float hillRightBackRad1 = 10.0;
+    float hillRightBack1 = hemisphere(queryPos - vec3(26.45, groundY - 5.0, 21.0), hillRightBackRad1);
+    if (hillRightBack1 < finalDist) {
+        finalMat = MAT_HILL;
+    }
+    finalDist = smoothUnion(finalDist, hillRightBack1, 0.25f);
+
+    float hillRightBackRad2 = 9.0;
+    float hillRightBack2 = hemisphere(queryPos - vec3(25.55, groundY - 3.25, 15.0), hillRightBackRad2);
+    if (hillRightBack2 < finalDist) {
+        finalMat = MAT_HILL;
+    }
+    finalDist = smoothUnion(finalDist, hillRightBack2, 0.25f);
+    
+    float hillRightFrontRad = 8.0;
+    float hillRightFront = hemisphere(queryPos - vec3(7.9, groundY - 6.45, -6.0), hillRightFrontRad);
+    if (hillRightFront < finalDist) {
+        finalMat = MAT_HILL;
+    }
+    finalDist = smoothUnion(finalDist, hillRightFront, 0.25f);
+
     obj.distance_t = finalDist;
     obj.material_id = finalMat;
     return obj;
@@ -320,8 +355,7 @@ vec3 getSceneColor(vec2 uv)
         for(int i = 1; i < 3; ++i) {
             color += albedo * lights[i].col * max(0.0, dot(n, lights[i].dir));
         }
-    }
-    else {
+    } else {
         color = vec3(0.5, 0.7, 0.9);
     }
     color = pow(color, vec3(1. / 2.2));
