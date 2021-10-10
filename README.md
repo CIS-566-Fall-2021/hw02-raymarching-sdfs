@@ -9,7 +9,7 @@
 (I'm having some issue of apply different rotation along Z. Still trying to fix it ;o;)
 ## Implementation Details
 
-- Gear: I created gearSDF using box & ring at the first place. But it is hardly satisfying when I tried to generate infinite scene. It's hard to match box-shape teeth after rotation. Thus I switched to sinwave. 
+- Gear: I created gearSDF using box & ring at the first place. But it is hardly satisfying when I tried to generate infinite scene. It's hard to match box-shape teeth after rotation. Thus I switched to smoothblend of sinwave & ring . 
 ![](gear1.png)
 ![](gear2.png)
 

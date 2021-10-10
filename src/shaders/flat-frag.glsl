@@ -117,8 +117,8 @@ float gearSDF(vec3 p, float speed)
     float inner_radius = 0.5;
 
     d=min(d,length(p+vec3(p.xy/lpxy,0.)*.1*sin(ang*GEAR_SECTOR))-outer_radius);
-    d=max(d,abs(p.z)-height);
-    d=max(d,inner_radius-lpxy);
+    d=smax(d,abs(p.z)-height,0.01);
+    d=smax(d,inner_radius-lpxy,0.01);
     return d;
 }
 vec4 inverseQuat(vec4 q)
