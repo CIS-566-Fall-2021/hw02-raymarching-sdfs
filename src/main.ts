@@ -85,7 +85,7 @@ function main() {
     processKeyPresses();
     renderer.render(camera, flat, [
       square,
-    ], time);
+    ], time / 100);
     time++;
     // stats.end();
 
