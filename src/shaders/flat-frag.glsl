@@ -116,7 +116,7 @@ float gearSDF(vec3 p, float speed)
     float height = 0.1;
     float inner_radius = 0.5;
 
-    d=min(d,length(p+vec3(p.xy/lpxy,0)*.1*sin(ang*GEAR_SECTOR))-outer_radius);
+    d=min(d,length(p+vec3(p.xy/lpxy,0.)*.1*sin(ang*GEAR_SECTOR))-outer_radius);
     d=max(d,abs(p.z)-height);
     d=max(d,inner_radius-lpxy);
     return d;
@@ -170,12 +170,11 @@ float sceneSDF(vec3 p){
     
     float mod_z = mod(p.z,2.0)-1.0;
     float rot = floor(abs(p.z/2.0));
-    vec4 q = axAng2Quat(Z_AXIS,PI2/8.0*rot);
+    vec4 q = axAng2Quat(Z_AXIS,PI2/8.0);
     p = transformVecByQuat(p,q);
     float mod_x = mod(p.x,size)-size/2.;
     vec3 mod_p = vec3(mod_x,p.y,mod_z);
     return min(gearRepeat(mod_p),s);
-    
 }
 
 float hardShadow(vec3 rayOrigin, vec3 rayDirection, float minT, float maxT)
