@@ -256,103 +256,103 @@ hitObj sceneSDF(vec3 queryPos)
     }
     finalDist = smoothUnion(finalDist, hillCenter, 0.25f);
 
-    // float hillLeftRad1 = 15.0;
-    // float hillLeft1 = hemisphere(queryPos - vec3(-10.0 - 3.0, groundY - 11.0, 19.0 + 4.5), hillLeftRad1);
-    // if (hillLeft1 < finalDist) {
-    //     finalMat = MAT_HILL;
-    // }
-    // // finalDist = smoothUnion(finalDist, hillLeft1, 0.25f);
+    float hillLeftRad1 = 15.0;
+    float hillLeft1 = hemisphere(queryPos - vec3(-10.0 - 3.0, groundY - 11.0, 19.0 + 4.5), hillLeftRad1);
+    if (hillLeft1 < finalDist) {
+        finalMat = MAT_HILL;
+    }
+    // finalDist = smoothUnion(finalDist, hillLeft1, 0.25f);
 
-    // float hillLeftBudRad1 = 12.5;
-    // float hillLeftBud1 = hemisphere(queryPos - vec3(-10.0 - 3.0, groundY - 9.2, 13.5 + 4.), hillLeftBudRad1);
-    // if (hillLeftBud1 < finalDist) {
-    //     finalMat = MAT_HILL;
-    // }
-    // finalDist = smoothUnion(finalDist, smin(hillLeft1, hillLeftBud1, 0.25), 0.25f);
+    float hillLeftBudRad1 = 12.5;
+    float hillLeftBud1 = hemisphere(queryPos - vec3(-10.0 - 3.0, groundY - 9.2, 13.5 + 4.), hillLeftBudRad1);
+    if (hillLeftBud1 < finalDist) {
+        finalMat = MAT_HILL;
+    }
+    finalDist = smoothUnion(finalDist, smin(hillLeft1, hillLeftBud1, 0.25), 0.25f);
 
-    // float hillLeftRad2 = 12.0;
-    // float hillLeft2 = hemisphere(queryPos - vec3(-11.0 - 3.0, groundY - 9.5, 8.5), hillLeftRad2);
-    // if (hillLeft2 < finalDist) {
-    //     finalMat = MAT_HILL;
-    // }
-    // // finalDist = smoothUnion(finalDist, hillLeft2, 0.25f);
+    float hillLeftRad2 = 12.0;
+    float hillLeft2 = hemisphere(queryPos - vec3(-11.0 - 3.0, groundY - 9.5, 8.5), hillLeftRad2);
+    if (hillLeft2 < finalDist) {
+        finalMat = MAT_HILL;
+    }
+    // finalDist = smoothUnion(finalDist, hillLeft2, 0.25f);
 
-    // float hillLeftRadBud2 = 8.0;
-    // float hillLeftBud2 = hemisphere(queryPos - vec3(-8.7 - 3.0, groundY - 5.61, 3.5), hillLeftRadBud2);
-    // if (hillLeftBud2 < finalDist) {
-    //     finalMat = MAT_HILL;
-    // }
-    // finalDist = smoothUnion(finalDist, smin(hillLeft2, hillLeftBud2, 0.25f), 0.25f);
+    float hillLeftRadBud2 = 8.0;
+    float hillLeftBud2 = hemisphere(queryPos - vec3(-8.7 - 3.0, groundY - 5.61, 3.5), hillLeftRadBud2);
+    if (hillLeftBud2 < finalDist) {
+        finalMat = MAT_HILL;
+    }
+    finalDist = smoothUnion(finalDist, smin(hillLeft2, hillLeftBud2, 0.25f), 0.25f);
 
-    // float hillLeftBackRad1 = 10.0;
-    // float hillLeftBack1 = hemisphere(queryPos - vec3(-26.45, groundY - 5.0, 21.0), hillLeftBackRad1);
-    // if (hillLeftBack1 < finalDist) {
-    //     finalMat = MAT_HILL;
-    // }
-    // finalDist = smoothUnion(finalDist, hillLeftBack1, 0.25f);
+    float hillLeftBackRad1 = 10.0;
+    float hillLeftBack1 = hemisphere(queryPos - vec3(-26.45, groundY - 5.0, 21.0), hillLeftBackRad1);
+    if (hillLeftBack1 < finalDist) {
+        finalMat = MAT_HILL;
+    }
+    finalDist = smoothUnion(finalDist, hillLeftBack1, 0.25f);
 
-    // float hillLeftBackRad2 = 15.0;
-    // float hillLeftBack2 = hemisphere(queryPos - vec3(-26.95, groundY - 10.0, 15.0), hillLeftBackRad2);
-    // if (hillLeftBack2 < finalDist) {
-    //     finalMat = MAT_HILL;
-    // }
-    // finalDist = smoothUnion(finalDist, hillLeftBack2, 0.25f);
+    float hillLeftBackRad2 = 15.0;
+    float hillLeftBack2 = hemisphere(queryPos - vec3(-26.95, groundY - 10.0, 15.0), hillLeftBackRad2);
+    if (hillLeftBack2 < finalDist) {
+        finalMat = MAT_HILL;
+    }
+    finalDist = smoothUnion(finalDist, hillLeftBack2, 0.25f);
 
-    // float hillLeftFrontRad = 10.0;
-    // float hillLeftFront = hemisphere(queryPos - vec3(-5.9 - 3.0, groundY - 8.45, -5.0), hillLeftFrontRad);
-    // if (hillLeftFront < finalDist) {
-    //     finalMat = MAT_HILL;
-    // }
-    // finalDist = smoothUnion(finalDist, hillLeftFront, 0.25f);
+    float hillLeftFrontRad = 10.0;
+    float hillLeftFront = hemisphere(queryPos - vec3(-5.9 - 3.0, groundY - 8.45, -5.0), hillLeftFrontRad);
+    if (hillLeftFront < finalDist) {
+        finalMat = MAT_HILL;
+    }
+    finalDist = smoothUnion(finalDist, hillLeftFront, 0.25f);
 
-    // float hillRightRad1 = 15.0;
-    // float hillRight1 = hemisphere(queryPos - vec3(13.0, groundY - 11.0, 19.0 + 4.5), hillRightRad1);
-    // if (hillRight1 < finalDist) {
-    //     finalMat = MAT_HILL;
-    // }
-    // // finalDist = smoothUnion(finalDist, hillRight1, 0.25f);
+    float hillRightRad1 = 15.0;
+    float hillRight1 = hemisphere(queryPos - vec3(13.0, groundY - 11.0, 19.0 + 4.5), hillRightRad1);
+    if (hillRight1 < finalDist) {
+        finalMat = MAT_HILL;
+    }
+    // finalDist = smoothUnion(finalDist, hillRight1, 0.25f);
     
-    // float hillRightBudRad1 = 12.5;
-    // float hillRightBud1 = hemisphere(queryPos - vec3(13.5, groundY - 9.2, 13.5 + 4.), hillRightBudRad1);
-    // if (hillRightBud1 < finalDist) {
-    //     finalMat = MAT_HILL;
-    // }
-    // finalDist = smoothUnion(finalDist, smin(hillRight1, hillRightBud1, 0.25), 0.25f);
+    float hillRightBudRad1 = 12.5;
+    float hillRightBud1 = hemisphere(queryPos - vec3(13.5, groundY - 9.2, 13.5 + 4.), hillRightBudRad1);
+    if (hillRightBud1 < finalDist) {
+        finalMat = MAT_HILL;
+    }
+    finalDist = smoothUnion(finalDist, smin(hillRight1, hillRightBud1, 0.25), 0.25f);
     
-    // float hillRightRad2 = 12.3;
-    // float hillRight2 = hemisphere(queryPos - vec3(14.0, groundY - 9.5, 8.5), hillRightRad2);
-    // if (hillRight2 < finalDist) {
-    //     finalMat = MAT_HILL;
-    // }
-    // // finalDist = smoothUnion(finalDist, hillRight2, 0.25f);
+    float hillRightRad2 = 12.3;
+    float hillRight2 = hemisphere(queryPos - vec3(14.0, groundY - 9.5, 8.5), hillRightRad2);
+    if (hillRight2 < finalDist) {
+        finalMat = MAT_HILL;
+    }
+    // finalDist = smoothUnion(finalDist, hillRight2, 0.25f);
 
-    // float hillRightRadBud2 = 5.0;
-    // float hillRightBud2 = hemisphere(queryPos - vec3(10.15, groundY - 2.41, 2.5), hillRightRadBud2);
-    // if (hillRightBud2 < finalDist) {
-    //     finalMat = MAT_HILL;
-    // }
-    // finalDist = smoothUnion(finalDist, min(hillRight2, hillRightBud2), 0.25f);
+    float hillRightRadBud2 = 5.0;
+    float hillRightBud2 = hemisphere(queryPos - vec3(10.15, groundY - 2.41, 2.5), hillRightRadBud2);
+    if (hillRightBud2 < finalDist) {
+        finalMat = MAT_HILL;
+    }
+    finalDist = smoothUnion(finalDist, min(hillRight2, hillRightBud2), 0.25f);
 
-    // float hillRightBackRad1 = 10.0;
-    // float hillRightBack1 = hemisphere(queryPos - vec3(26.45, groundY - 5.0, 21.0), hillRightBackRad1);
-    // if (hillRightBack1 < finalDist) {
-    //     finalMat = MAT_HILL;
-    // }
-    // finalDist = smoothUnion(finalDist, hillRightBack1, 0.25f);
+    float hillRightBackRad1 = 10.0;
+    float hillRightBack1 = hemisphere(queryPos - vec3(26.45, groundY - 5.0, 21.0), hillRightBackRad1);
+    if (hillRightBack1 < finalDist) {
+        finalMat = MAT_HILL;
+    }
+    finalDist = smoothUnion(finalDist, hillRightBack1, 0.25f);
 
-    // float hillRightBackRad2 = 9.0;
-    // float hillRightBack2 = hemisphere(queryPos - vec3(25.55, groundY - 3.25, 15.0), hillRightBackRad2);
-    // if (hillRightBack2 < finalDist) {
-    //     finalMat = MAT_HILL;
-    // }
-    // finalDist = smoothUnion(finalDist, hillRightBack2, 0.25f);
+    float hillRightBackRad2 = 9.0;
+    float hillRightBack2 = hemisphere(queryPos - vec3(25.55, groundY - 3.25, 15.0), hillRightBackRad2);
+    if (hillRightBack2 < finalDist) {
+        finalMat = MAT_HILL;
+    }
+    finalDist = smoothUnion(finalDist, hillRightBack2, 0.25f);
     
-    // float hillRightFrontRad = 8.0;
-    // float hillRightFront = hemisphere(queryPos - vec3(7.9, groundY - 6.45, -6.0), hillRightFrontRad);
-    // if (hillRightFront < finalDist) {
-    //     finalMat = MAT_HILL;
-    // }
-    // finalDist = smoothUnion(finalDist, hillRightFront, 0.25f);
+    float hillRightFrontRad = 8.0;
+    float hillRightFront = hemisphere(queryPos - vec3(7.9, groundY - 6.45, -6.0), hillRightFrontRad);
+    if (hillRightFront < finalDist) {
+        finalMat = MAT_HILL;
+    }
+    finalDist = smoothUnion(finalDist, hillRightFront, 0.25f);
 
     vec3 portalLoc = vec3(0.0, groundY + 10.0, 9.5);
     vec3 portalDim = vec3(1.0, 0.001, .75);
@@ -444,7 +444,7 @@ Intersection getRaymarchedIntersection(vec2 uv)
     return intersection;
 }
 
-float softShadow(vec3 rOrigin, vec3 rDir, float mint, float maxt, float k)
+float softShadow(vec3 rDir, vec3 rOrigin, float mint, float maxt, float k)
 {
     float res = 1.0;
     for (float t = mint; t < maxt;) {
@@ -458,6 +458,24 @@ float softShadow(vec3 rOrigin, vec3 rDir, float mint, float maxt, float k)
     return res;
 }
 
+// float softShadow(vec3 dir, vec3 origin, float min_t, float k) {
+//     float res = 1.0;
+//     float t = min_t;
+//     for(int i = 0; i < MAX_RAY_STEPS; ++i) {
+//         float m = shadowMap3D(origin + t * dir);
+//         if(m < 0.0001) {
+//             return 0.0;
+//         }
+//         res = min(res, k * m / t);
+//         t += m;
+//     }
+//     return res;
+// }
+
+float shadow(vec3 dir, vec3 origin, float min_t) {
+    return softShadow(dir, origin, min_t, float(MAX_RAY_STEPS), 6.0);
+}
+
 vec3 palette( in float t, in vec3 a, in vec3 b, in vec3 c, in vec3 d )
 {
     return a + b*cos( 6.28318*(c*t+d) );
@@ -466,10 +484,14 @@ vec3 palette( in float t, in vec3 a, in vec3 b, in vec3 c, in vec3 d )
 vec3 getSceneColor(vec2 uv)
 {
     Intersection intersection = getRaymarchedIntersection(uv);
+    Ray r = getRay(uv);
+    // vec3 isect = u_Eye + intersection.distance_t * r.direction;
+    // vec3 nor = estimateNorm(intersection.position);
+    // vec3 view = normalize(u_Eye - intersection.position);
     
     DirectionalLight lights[3];
 
-    vec3 lightDir0 = vec3(-15.0, 3.0, 10.0);
+    vec3 lightDir0 = vec3(15.0, -3.0, 10.0);
     vec3 lightDir1 = vec3(0.0, 1.0, 0.0);
     vec3 lightDir2 = vec3(15.0, 0.0, 10.0);
     lights[0] = DirectionalLight(normalize(lightDir0), SUN_KEY_LIGHT);
@@ -478,12 +500,13 @@ vec3 getSceneColor(vec2 uv)
 
     vec3 backCol = SUN_KEY_LIGHT;
     vec3 albedo = vec3(0.5);
-    vec3 n = estimateNorm(intersection.position);
+    // vec3 n = estimateNorm(intersection.position);
 
-    vec3 color = albedo * lights[0].col * max(0.0, dot(n, lights[0].dir));
+    vec3 color = albedo * lights[0].col * max(0.0, dot(intersection.normal, lights[0].dir)) * shadow(lights[0].dir, intersection.position, 0.1);
+    // vec3 color = albedo * lights[0].col * max(0.0, dot(n, lights[0].dir));
     if (intersection.distance_t > 0.0) { 
         for(int i = 1; i < 3; ++i) {
-            color += albedo * lights[i].col * max(0.0, dot(n, lights[i].dir));
+            color += albedo * lights[i].col * max(0.0, dot(intersection.normal, lights[i].dir));
         }
     } else {
         color = vec3(0.5, 0.7, 0.9);
