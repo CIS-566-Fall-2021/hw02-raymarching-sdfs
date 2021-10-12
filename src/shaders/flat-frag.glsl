@@ -19,9 +19,10 @@ const float HALF_PI = 1.570796327;
 const float MAX_RAY_LENGTH = 20.0;
 
 // COLORS
-const vec3 MUG_COLOR = vec3(102.0, 153.0, 204.0) / 255.0;
-const vec3 SCISSORS_COLOR = vec3(1.0, 1.0, 0.0);
-const vec3 FLOOR_COLOR = vec3(0.7);
+const vec3 MUG_COLOR = vec3(140.0, 138.0, 132.0) / 255.0;
+const vec3 SCISSORS_COLOR = vec3(196.0, 202.0, 206.0) / 255.0;
+const vec3 FLOOR_COLOR = vec3(91.0, 96.0, 101.0) / 255.0;
+const vec3 GOLD_COLOR = vec3(215.0, 190.0, 105.0) / 255.0;
 const vec3 backgroundColor = vec3(0.2);
 
 // LIGHTS
@@ -230,18 +231,24 @@ float sceneSDFScissors(vec3 queryPos) {
     return t;
 }
 
+float sceneSDFMugLip(vec3 queryPos) {
+    // Capped Cone Lip
+    vec3 lipOffset = vec3(0.0, -1.05, 0.0);
+    float Lip = sdCappedCone(queryPos + lipOffset, 0.10, 1.05, 1.00);
+    Lip = opRound(Lip, 0.07);
+
+    // Cut out inner cylinder
+     vec3 innerCylinderOffset = vec3(0.0, -0.25, 0.0);
+    Lip = opSmoothSubtraction(sdRoundedCylinder(queryPos + innerCylinderOffset, 0.45, 0.10, 1.0), Lip, 0.15);
+    return Lip;
+}
+
 // Build for the Mug
 float sceneSDFMug(vec3 queryPos) {
 
     queryPos = transpose(rotation3dY(5.0 * HALF_PI / 3.0)) * queryPos;
     // Outer cylinder
     float t = sdRoundedCylinder(queryPos, 0.5, 0.15, 1.0);
-
-    // Capped Cone Lip
-    vec3 lipOffset = vec3(0.0, -1.05, 0.0);
-    float Lip = sdCappedCone(queryPos + lipOffset, 0.10, 1.05, 1.00);
-    Lip = opRound(Lip, 0.07);
-    t = smin(t, Lip, .15);
 
     // Capped Cone Base
     vec3 baseOffset = vec3(0.0, 1.05, 0.0);
@@ -293,11 +300,18 @@ vec3 animateYRotation(vec3 p) {
 float sceneSDF(vec3 queryPos, out int hitObj) 
 {   
     // MUG
-    float t = sceneSDFMug(/*animateHorizontal(*/(queryPos));
+    float t = sceneSDFMug(animateHorizontal((queryPos)));
     hitObj = 0;
 
+    // MUG LIP
+    float t2 = smin(t, sceneSDFMugLip(animateHorizontal((queryPos))), .15);
+    if (t2 < t) {
+        t = t2;
+        hitObj = 3;
+    }
+
     // SCISSORS
-    float t2 = min(t, sceneSDFScissors(/*animateYRotation(animateHorizontal*/(queryPos))/*)*/);
+    t2 = min(t, sceneSDFScissors(animateYRotation(animateHorizontal(queryPos))));
     if (t2 < t) {
         t = t2;
         hitObj = 1;
@@ -417,6 +431,8 @@ vec3 computeMaterial(int hitObj, vec3 p, vec3 n) {
         case 2: // Floor
         albedo = FLOOR_COLOR;
         break; // Background
+        case 3: // Mug Lip
+        albedo = GOLD_COLOR;
         case -1:
         return backgroundColor;
         break;
