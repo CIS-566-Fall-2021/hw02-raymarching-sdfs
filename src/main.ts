@@ -1,3 +1,4 @@
+
 import {vec2, vec3} from 'gl-matrix';
 // import * as Stats from 'stats-js';
 // import * as DAT from 'dat-gui';
@@ -38,15 +39,15 @@ function main() {
   }, false);
 
   // Initial display for framerate
-  // const stats = Stats();
-  // stats.setMode(0);
-  // stats.domElement.style.position = 'absolute';
-  // stats.domElement.style.left = '0px';
-  // stats.domElement.style.top = '0px';
-  // document.body.appendChild(stats.domElement);
+  /* const stats = Stats();
+  stats.setMode(0);
+  stats.domElement.style.position = 'absolute';
+  stats.domElement.style.left = '0px';
+  stats.domElement.style.top = '0px';
+  document.body.appendChild(stats.domElement);
 
   // Add controls to the gui
-  // const gui = new DAT.GUI();
+   const gui = new DAT.GUI(); */
 
   // get canvas and webgl context
   const canvas = <HTMLCanvasElement> document.getElementById('canvas');
@@ -61,7 +62,7 @@ function main() {
   // Initial call to load scene
   loadScene();
 
-  const camera = new Camera(vec3.fromValues(0, 0, -10), vec3.fromValues(0, 0, 0));
+  const camera = new Camera(vec3.fromValues(0, 2.5, 8.5), vec3.fromValues(0, 0, 0));
 
   const renderer = new OpenGLRenderer(canvas);
   renderer.setClearColor(164.0 / 255.0, 233.0 / 255.0, 1.0, 1);
