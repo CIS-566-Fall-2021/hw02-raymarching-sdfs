@@ -1,8 +1,7 @@
-//removed dat.gui for deployment
 
-// import {vec2, vec3} from 'gl-matrix';
-// import * as Stats from 'stats-js';
-// import * as DAT from 'dat-gui';
+import {vec2, vec3} from 'gl-matrix';
+import * as Stats from 'stats-js';
+import * as DAT from 'dat-gui';
 import Square from './geometry/Square';
 import OpenGLRenderer from './rendering/gl/OpenGLRenderer';
 import Camera from './Camera';
@@ -48,7 +47,7 @@ function main() {
   document.body.appendChild(stats.domElement);
 
   // Add controls to the gui
-  // const gui = new DAT.GUI();
+   const gui = new DAT.GUI();
 
   // get canvas and webgl context
   const canvas = <HTMLCanvasElement> document.getElementById('canvas');
