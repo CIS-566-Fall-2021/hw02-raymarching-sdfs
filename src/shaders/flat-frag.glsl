@@ -28,6 +28,10 @@ const vec3 backgroundColor = vec3(0.2);
 // LIGHTS
 const vec3 LIGHT_POS = vec3(-1.0, 3.0, 2.0);
 const vec3 LIGHT_COLOR = vec3(1.0, .88, .7);
+const vec3 FILL_LIGHT_DIR = vec3(0.0, 1.0, 0.0);
+const vec3 FILL_LIGHT_COLOR = vec3(0.7, 0.2, 0.7) * 0.2;
+const vec3 AMBIENT_LIGHT_DIR = normalize(-vec3(15.0, 0.0, 10.0));
+const vec3 AMBIENT_LIGHT_COLOR = vec3(0.6, 1.0, 0.4) * 0.2;
 
 
 // structs
@@ -262,11 +266,11 @@ float sceneSDFMug(vec3 queryPos) {
     for (float i = 0.0; i < 4.0; i++) {
         // cut out upper rings
         float UpperRing = sdRoundedCylinder(queryPos + RingOffset1, 0.5025, .005, .01);
-        t = smin(t, UpperRing, 0.025);
+        t = smin(t, UpperRing, .025);
         RingOffset1 += vec3(0.0, 0.05, 0.0);
         // cut out lower rings
         float LowerRing = sdRoundedCylinder(queryPos + RingOffset2, 0.54 + i * 0.02, .005, .01);
-        t = smin(t, LowerRing, 0.025);
+        t = min(t, LowerRing);
         RingOffset2 += vec3(0.0, 0.15, 0.0);
     }
 
@@ -303,15 +307,8 @@ float sceneSDF(vec3 queryPos, out int hitObj)
     float t = sceneSDFMug(animateHorizontal((queryPos)));
     hitObj = 0;
 
-    // MUG LIP
-    float t2 = smin(t, sceneSDFMugLip(animateHorizontal((queryPos))), .15);
-    if (t2 < t) {
-        t = t2;
-        hitObj = 3;
-    }
-
     // SCISSORS
-    t2 = min(t, sceneSDFScissors(animateYRotation(animateHorizontal(queryPos))));
+    float t2 = min(t, sceneSDFScissors(animateYRotation(animateHorizontal(queryPos))));
     if (t2 < t) {
         t = t2;
         hitObj = 1;
@@ -322,6 +319,13 @@ float sceneSDF(vec3 queryPos, out int hitObj)
     if (t2 < t) {
         t = t2;
         hitObj = 2;
+    }
+
+    // MUG LIP
+    t2 = smin(t, sceneSDFMugLip(animateHorizontal((queryPos))), .05);
+    if (t2 < t) {
+        t = t2;
+        hitObj = 3;
     }
 
     return t;
@@ -433,15 +437,22 @@ vec3 computeMaterial(int hitObj, vec3 p, vec3 n) {
         break; // Background
         case 3: // Mug Lip
         albedo = GOLD_COLOR;
+        break;
         case -1:
         return backgroundColor;
         break;
     }
     
+    // create shadows
     vec3 color = albedo *
                  LIGHT_COLOR *
                  max(0.0, dot(n, normalize(LIGHT_POS - p))) *
                  softShadow(normalize(LIGHT_POS - p), p, 0.1, hitObj);
+
+    // fake global illumination
+    color += albedo * LIGHT_COLOR * max(0.0, dot(n, normalize(LIGHT_POS - p))); // shadow-casting light
+    color += albedo * AMBIENT_LIGHT_COLOR * max(0.0, dot(n, AMBIENT_LIGHT_DIR));
+    color += albedo * FILL_LIGHT_COLOR * max(0.0, dot(n, FILL_LIGHT_DIR));
 
     return color;
 }
