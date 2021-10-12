@@ -259,16 +259,16 @@ float sceneSDF(vec3 queryPos, out int objID)
         floorAndWalls = smin(floorPlane, walls, 1.0);
         float allCylinders = min(cylinders, floorAndWalls);
         float gongs = min(gong1, gong2);
-        float pendulumAndGongs = smin(pendulum, gongs, 0.0);
+        float pendulumAndGongs = min(pendulum, gongs);
         float testSphere = sdfSphere(queryPos, vec3(limitB.x + cylinder_r * 2.0, limitA.y, limitA.z), 0.1);
 
         // Assign object materials
         float final = min(allCylinders, pendulumAndGongs);
 
         if (final == floorPlane) {objID = 1;}
-        if (final == cylinders) {objID = 2;}
-        if (final == gongs) {objID = 3;}
-        if (final == pendulum) {objID = 4;}
+        else if (final == cylinders) {objID = 2;}
+        else if (final == gongs) {objID = 3;}
+        else if (final == pendulum) {objID = 4;}
 
         //return min(allCylinders, testSphere);
         return final;
@@ -337,7 +337,7 @@ float getDirLight(Intersection intersection, vec3 light_dir, out int objID)
     float lightIntensity = diffuseTerm + ambientTerm;
 
     // Calculate shadows
-    float shadow = shadow(intersection.position, light_dir, 50.0, 80.0, objID);   //float shadow = 1.0;
+    float shadow = shadow(intersection.position, light_dir, 50.0, 30.0, objID);   //float shadow = 1.0;
     shadow = clamp(shadow, 0.3, 1.0);
 
     return lightIntensity * shadow;
@@ -364,13 +364,13 @@ float getPointLight(Intersection intersection, vec3 light_pos, out int objID)
 
 vec3 computeMaterial(Intersection intersection, out int objID) {
 
-    DirectionalLight dirLights[3];
-    dirLights[0] = DirectionalLight(normalize(vec3(1.0, 0.5, 1.0)),
+    DirectionalLight warmLight = DirectionalLight(normalize(vec3(1.0, 0.5, 1.0)),
                                 vec3(1.0, 0.88, 0.8));
-    dirLights[1] = DirectionalLight(normalize(vec3(1.0, 0.5, -1.0)),
+    DirectionalLight coolLight = DirectionalLight(normalize(vec3(1.0, 0.5, -1.0)),
                                 vec3(0.8, 0.88, 1.0));
-    dirLights[2] = DirectionalLight(vec3(0.), vec3(0.));
-    
+    DirectionalLight topLight = DirectionalLight(normalize(vec3(0.0, 1.0, 0.0)),
+                                vec3(0.8, 0.88, 1.0));
+                                
     vec3 albedo;
 	switch(objID)
     {
@@ -398,15 +398,11 @@ vec3 computeMaterial(Intersection intersection, out int objID) {
     vec3 light1_pos = vec3(15.0, 17.0, -2.0);
     float light1 = getPointLight(intersection, light1_pos, objID);
 
-    vec3 color = albedo * 0.7 * dirLights[0].color * getDirLight(intersection, dirLights[0].dir, objID);
+    vec3 color = albedo * 0.7 * warmLight.color * getDirLight(intersection, warmLight.dir, objID);
 
-    color += albedo * 0.7 * dirLights[1].color * getDirLight(intersection, dirLights[1].dir, objID);
-    //color = albedo * 0.5 * dirLights[2].color * getDirLight(intersection, dirLights[2].dir, objID);
-    // for(int i = 0; i < 3; ++i) {
-    //     color += albedo *
-    //              dirLights[i].color * getDirLight(intersection, dirLights[0].dir, objID);
-    //              //shadow(lights[i].dir, p, 0.1);
-    // }
+    color += albedo * 0.7 * coolLight.color * getDirLight(intersection, coolLight.dir, objID);
+    color = albedo * topLight.color * getDirLight(intersection, topLight.dir, objID);
+
     
     return color;
 }
