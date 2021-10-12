@@ -99,7 +99,6 @@ float differenceSDF(float distA, float distB) {
 
 /******* SceneSDF *******/
 
-
 #define GEAR_SECTOR 12.0
 #define GRID_SIZE 1.
 float gearSDF(vec3 p)
@@ -109,8 +108,8 @@ float gearSDF(vec3 p)
     float d=10000.;
     float ang=atan(p.y,p.x);
     float outer_radius = 0.5*(sin(PI2/8.)*0.5+0.015);
-    float height = 0.5*0.05;
-    float inner_radius = 0.5*0.1;
+    float height = 0.025;
+    float inner_radius = 0.1;
 
     d=min(d,length(p+vec3(p.xy/lpxy,0.)*.015*sin(ang*GEAR_SECTOR))-outer_radius);
     d=smax(d,abs(p.z)-height,0.01);
@@ -196,6 +195,9 @@ float secondset(vec3 p){
     d = min(d,gearRepeat2(p0.zyx+vec3(0.,1.0,0.)));
     return d;
 }
+//#define first_pattern
+//#define second_pattern
+//#define combined
 float sceneSDF(vec3 p){
     vec3 mod_p;
     mod_p = fract(p)-0.5;
@@ -203,16 +205,24 @@ float sceneSDF(vec3 p){
     vec3 id = floor(mod(p,2.))*2.-1.;
     float checker = id.x*id.y*id.z;
     //mod_p = p-0.5;
-    //float d = firstset(checker*mod_p);
-    //float d = secondset(checker*mod_p);
+
+    #ifdef first_pattern
+    float d = firstset(checker*mod_p);
+    #endif /* second_pattern */
+    #ifdef second_pattern
+    float d = secondset(checker*mod_p);
+    #endif /* second_pattern */
+    #ifdef combined
     float d;
     float second_checker = id.x;
-    if(second_checker==-1.){
-        d = firstset(second_checker*checker*mod_p);
+    if(second_checker==1.){
+        d = firstset(-checker*mod_p);
+    
     }
     else{
-        d = secondset(second_checker*checker*mod_p);
+        d = secondset(checker*mod_p);
     }
+    #endif /* combined */
     return d;
 }
 
@@ -361,8 +371,8 @@ void main() {
       vec3 color = phongIllumination(K_a, K_d, K_s, shininess, p, eye);
      //Lambertian Shading
 
-      vec3 col = color;
-     out_Col = vec4(col, 1.0);
+      vec3 col = vec3(0.5)+ 0.5*i.normal;
+      out_Col = vec4(col, 1.0);
   }
   
 }
