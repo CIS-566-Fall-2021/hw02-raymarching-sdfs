@@ -104,10 +104,6 @@ float differenceSDF(float distA, float distB) {
 #define GRID_SIZE 1.
 float gearSDF(vec3 p)
 {
-    // float t = speed*0.05*sin(0.1*u_Time);
-    // p.xy = mat2(cos(t),-sin(t),
-    //            sin(t),cos(t)) * p.xy;
-    //gear teeth calculation
     float w = 0.25;
     float lpxy=length(p.xy);
     float d=10000.;
@@ -140,14 +136,14 @@ vec4 axAng2Quat(vec3 ax, float ang)
 {
     return vec4(normalize(ax),1)*sin(vec2(ang*.5)+vec2(0,PI2*.25)).xxxy;
 }
+
 #define Z_AXIS vec3(0.0,0.0,1.0)
 #define X_AXIS vec3(1.0,0.0,0.0)
 #define Y_AXIS vec3(0.0,1.0,0.0)
-#define XZ_AXIS vec3(1.0,1.0,1.0)
+
 float gearRepeat(vec3 p){
 
     vec4 q = axAng2Quat(Z_AXIS,0.01*u_Time);
-    q =  multQuat(q,axAng2Quat(Y_AXIS,0.*PI2/4.));
     vec3 p1 = transformVecByQuat(p,q);
 
     float g1 = gearSDF(p1);
@@ -156,14 +152,29 @@ float gearRepeat(vec3 p){
     float g2 = gearSDF(p2);
     vec3 p3 = p+vec3(0.5,-0.5,0.);
     q = axAng2Quat(Z_AXIS,0.01*u_Time);
-    q =  multQuat(q,axAng2Quat(X_AXIS,0.*PI2/4.)); 
     p3 = transformVecByQuat(p3,q);
     float g3 = gearSDF(p3);
 
 
     return min(min(g1,g2),g3);
 }
-float hash(float n) { return fract(sin(n) * 1e4); }
+
+
+float gearRepeat2(vec3 p){
+    vec4 q_time = axAng2Quat(Z_AXIS,0.01*u_Time);
+    vec4 q;
+    q =  multQuat(q_time,axAng2Quat(Y_AXIS,PI2/4.));
+    vec3 p1 = transformVecByQuat(p,q);
+    float g1 = gearSDF(p1); 
+    q = multQuat(q,axAng2Quat(Z_AXIS,-PI2/8.+0.01));
+    vec3 p2 = transformVecByQuat(0.92*p+vec3(0.5-0.34,-0.30,0.),q);
+    float g2 = gearSDF(p2);
+    vec3 p3 = p+vec3(0.5,-0.5,0.);
+    q =  multQuat(q_time,axAng2Quat(X_AXIS,PI2/4.)); 
+    p3 = transformVecByQuat(p3,q);
+    float g3 = gearSDF(p3);
+    return min(min(g1,g2),g3);                                                                    
+}
 
 float firstset(vec3 p){
     p = p + vec3(0.,0.5,0.);
@@ -175,36 +186,14 @@ float firstset(vec3 p){
     //d = gearSDF(p);
     return d;
 }
-float gearRepeat2(vec3 p){
-
-    vec4 q = axAng2Quat(Z_AXIS,0.01*u_Time);
-    q =  multQuat(q,axAng2Quat(Y_AXIS,PI2/4.));
-    vec3 p1 = transformVecByQuat(p,q);
-
-    float g1 = gearSDF(p1);
-    q = axAng2Quat(Z_AXIS,-0.01*u_Time);
-    q =  multQuat(q,axAng2Quat(Y_AXIS,PI2/4.)); 
-    q = multQuat(q,axAng2Quat(Z_AXIS,-PI2/8.));
-    vec3 p2 = transformVecByQuat(0.92*p+vec3(0.5-0.34,-0.30,0.),q);
-    float g2 = gearSDF(p2);
-    vec3 p3 = p+vec3(0.5,-0.5,0.);
-    q = axAng2Quat(Z_AXIS,-0.01*u_Time);
-    q =  multQuat(q,axAng2Quat(X_AXIS,PI2/4.)); 
-    p3 = transformVecByQuat(p3,q);
-    float g3 = gearSDF(p3);
-
-    return min(min(g1,g2),g3);
-}
 
 float secondset(vec3 p){
     p = p + vec3(0.,0.5,0.);
     float d = gearRepeat2(p);
-    vec3 p0 = p*vec3(1.,1.,1.);
     vec3 p1 = p*vec3(-1.,1.,1.);
     d = min(d,gearRepeat2(p1.xzy+vec3(0.,0.5,-0.5)));
-    p0 = p0 *(-1.,1.,-1.);
-    p0 = p0.zyx;
-    d = min(d,gearRepeat2(p0.xyz+vec3(0.,1.0,0.)));
+    vec3 p0 = p *(-1.,1.,-1.);
+    d = min(d,gearRepeat2(p0.zyx+vec3(0.,1.0,0.)));
     return d;
 }
 float sceneSDF(vec3 p){
@@ -214,8 +203,16 @@ float sceneSDF(vec3 p){
     vec3 id = floor(mod(p,2.))*2.-1.;
     float checker = id.x*id.y*id.z;
     //mod_p = p-0.5;
-    float d = secondset(checker*mod_p);
-    //d = secondset(p);
+    //float d = firstset(checker*mod_p);
+    //float d = secondset(checker*mod_p);
+    float d;
+    float second_checker = id.x;
+    if(second_checker==-1.){
+        d = firstset(second_checker*checker*mod_p);
+    }
+    else{
+        d = secondset(second_checker*checker*mod_p);
+    }
     return d;
 }
 
