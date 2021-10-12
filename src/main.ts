@@ -1,11 +1,11 @@
-import {vec2, vec3} from 'gl-matrix';
+import { vec2, vec3 } from 'gl-matrix';
 // import * as Stats from 'stats-js';
-// import * as DAT from 'dat-gui';
+import * as DAT from 'dat.gui';
 import Square from './geometry/Square';
 import OpenGLRenderer from './rendering/gl/OpenGLRenderer';
 import Camera from './Camera';
-import {setGL} from './globals';
-import ShaderProgram, {Shader} from './rendering/gl/ShaderProgram';
+import { setGL } from './globals';
+import ShaderProgram, { Shader } from './rendering/gl/ShaderProgram';
 
 // Define an object with application parameters and button callbacks
 // This will be referred to by dat.GUI's functions that add GUI elements.
@@ -24,18 +24,30 @@ function loadScene() {
 }
 
 function main() {
-  window.addEventListener('keypress', function (e) {
-    // console.log(e.key);
-    switch(e.key) {
-      // Use this if you wish
-    }
-  }, false);
+  window.addEventListener(
+    'keypress',
+    function (e) {
+      // console.log(e.key);
+      switch (
+        e.key
+        // Use this if you wish
+      ) {
+      }
+    },
+    false
+  );
 
-  window.addEventListener('keyup', function (e) {
-    switch(e.key) {
-      // Use this if you wish
-    }
-  }, false);
+  window.addEventListener(
+    'keyup',
+    function (e) {
+      switch (
+        e.key
+        // Use this if you wish
+      ) {
+      }
+    },
+    false
+  );
 
   // Initial display for framerate
   // const stats = Stats();
@@ -49,8 +61,8 @@ function main() {
   // const gui = new DAT.GUI();
 
   // get canvas and webgl context
-  const canvas = <HTMLCanvasElement> document.getElementById('canvas');
-  const gl = <WebGL2RenderingContext> canvas.getContext('webgl2');
+  const canvas = <HTMLCanvasElement>document.getElementById('canvas');
+  const gl = <WebGL2RenderingContext>canvas.getContext('webgl2');
   if (!gl) {
     alert('WebGL 2 not supported!');
   }
@@ -76,6 +88,9 @@ function main() {
     // Use this if you wish
   }
 
+  const gui = new DAT.GUI();
+  gui.add(controls, 'tesselations', 0, 10).step(1);
+
   // This function will be called every frame
   function tick() {
     camera.update();
@@ -83,9 +98,7 @@ function main() {
     gl.viewport(0, 0, window.innerWidth, window.innerHeight);
     renderer.clear();
     processKeyPresses();
-    renderer.render(camera, flat, [
-      square,
-    ], time);
+    renderer.render(camera, flat, [square], time);
     time++;
     // stats.end();
 
@@ -93,12 +106,16 @@ function main() {
     requestAnimationFrame(tick);
   }
 
-  window.addEventListener('resize', function() {
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    camera.setAspectRatio(window.innerWidth / window.innerHeight);
-    camera.updateProjectionMatrix();
-    flat.setDimensions(window.innerWidth, window.innerHeight);
-  }, false);
+  window.addEventListener(
+    'resize',
+    function () {
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      camera.setAspectRatio(window.innerWidth / window.innerHeight);
+      camera.updateProjectionMatrix();
+      flat.setDimensions(window.innerWidth, window.innerHeight);
+    },
+    false
+  );
 
   renderer.setSize(window.innerWidth, window.innerHeight);
   camera.setAspectRatio(window.innerWidth / window.innerHeight);

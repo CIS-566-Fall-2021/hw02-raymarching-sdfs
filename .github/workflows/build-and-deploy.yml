@@ -1,5 +1,3 @@
-
-
 name: Build and Deploy
 on:
   push:
@@ -16,7 +14,7 @@ jobs:
 
       - uses: actions/setup-node@v2-beta
         with:
-          node-version: "15.x"
+          node-version: '15.x'
 
       - uses: actions/cache@v2
         with:
@@ -36,4 +34,4 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           BRANCH: gh-pages
           FOLDER: dist
-          CLEAN: true
+          CLEAN: false
