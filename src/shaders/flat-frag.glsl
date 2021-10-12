@@ -5,7 +5,7 @@
 #define tmax 5
 #define EPSILON 1e-6
 #define PI2 6.283185
-#define MAX_DIS 10000.0
+#define MAX_DIS 10.0
 precision highp float;
 uniform vec3 u_Eye, u_Ref, u_Up;
 uniform vec2 u_Dimensions;
@@ -108,16 +108,15 @@ float gearSDF(vec3 p)
     // p.xy = mat2(cos(t),-sin(t),
     //            sin(t),cos(t)) * p.xy;
     //gear teeth calculation
-    int numTeeth = 12;
     float w = 0.25;
     float lpxy=length(p.xy);
     float d=10000.;
     float ang=atan(p.y,p.x);
-    float outer_radius = sin(PI2/8.)*0.5+0.015;
-    float height = 0.05;
-    float inner_radius = 0.1;
+    float outer_radius = 0.5*(sin(PI2/8.)*0.5+0.015);
+    float height = 0.5*0.05;
+    float inner_radius = 0.5*0.1;
 
-    d=min(d,length(p+vec3(p.xy/lpxy,0.)*.04*sin(ang*GEAR_SECTOR))-outer_radius);
+    d=min(d,length(p+vec3(p.xy/lpxy,0.)*.015*sin(ang*GEAR_SECTOR))-outer_radius);
     d=smax(d,abs(p.z)-height,0.01);
     d=smax(d,inner_radius-lpxy,0.01);
     return d;
@@ -147,16 +146,16 @@ vec4 axAng2Quat(vec3 ax, float ang)
 #define YZ_AXIS vec3(0.0,1.0,1.0)
 float gearRepeat(vec3 p){
 
-    vec4 q = axAng2Quat(Z_AXIS,0.*0.01*u_Time);
+    vec4 q = axAng2Quat(Z_AXIS,0.01*u_Time);
     q =  multQuat(q,axAng2Quat(Y_AXIS,0.*PI2/4.));
     vec3 p1 = transformVecByQuat(p,q);
 
     float g1 = gearSDF(p1);
-    q = axAng2Quat(Z_AXIS,-0.*0.01*u_Time);
-    vec3 p2 = transformVecByQuat(p+vec3(1.0-0.63,-0.63,0.),q);
+    q = axAng2Quat(Z_AXIS,-0.01*u_Time);
+    vec3 p2 = transformVecByQuat(p+vec3(0.5-0.315,-0.315,0.),q);
     float g2 = gearSDF(p2);
-    vec3 p3 = p+vec3(1.0,-1.0,0.);
-    q = axAng2Quat(Z_AXIS,0.*0.01*u_Time);
+    vec3 p3 = p+vec3(0.5,-0.5,0.);
+    q = axAng2Quat(Z_AXIS,0.01*u_Time);
     q =  multQuat(q,axAng2Quat(X_AXIS,0.*PI2/4.)); 
     p3 = transformVecByQuat(p3,q);
     float g3 = gearSDF(p3);
@@ -167,23 +166,24 @@ float gearRepeat(vec3 p){
 float hash(float n) { return fract(sin(n) * 1e4); }
 
 float firstset(vec3 p){
-    p = p + vec3(-1.,0.0,-1.0);
+    p = p + vec3(0.,0.5,0.);
     float d = gearRepeat(p);
     vec3 p0 = p*vec3(-1.,1.,1.);
-    d = min(d,gearRepeat(p0.zyx+vec3(-1.,-1.,0.)));
-
+    d = min(d,gearRepeat(p0.zyx+vec3(-0.5,-0.5,0.)));
     vec3 p1 = p*vec3(-1.,1.,1.);
-    d = min(d,gearRepeat(p1.xzy+vec3(0.,1.,-1.)));
+    d = min(d,gearRepeat(p1.xzy+vec3(0.,0.5,-0.5)));
+    //d = gearSDF(p);
     return d;
 }
 float sceneSDF(vec3 p){
     vec3 mod_p;
-    mod_p = mod(p,2.);
+    mod_p = fract(p)-0.5;
+    // calculate checkerboard
     vec3 id = floor(mod(p,2.))*2.-1.;
-    mod_p = p;
-    float d = firstset(mod_p);
-    float d2 = firstset(mod_p+vec3(2.,0.,0.));
-    d = min(d,d2);
+    float checker = id.x*id.y*id.z;
+    //mod_p = p-0.5;
+    float d = firstset(checker*mod_p);
+    
     return d;
 }
 
