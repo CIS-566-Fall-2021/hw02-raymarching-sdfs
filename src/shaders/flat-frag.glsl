@@ -33,6 +33,16 @@ struct DirectionalLight
 {
     vec3 dir;
     vec3 color;
+    float ambient;
+    float specular;
+    int hasShadow; // 1 if it casts a shadow, 0 if it doesn't cast a shadow
+};
+
+struct Material
+{
+    vec3 color;
+    float shininess;
+    float specular;
 };
 
 // Operations
@@ -325,22 +335,26 @@ float shadow(vec3 ro, vec3 rd, float maxt, float k, out int objID)
     return res;
 }
 
-// Gets both the light and shadows for a given light. isPoint is true for point lights, and false for direcitonal lights
-float getDirLight(Intersection intersection, vec3 light_dir, out int objID)
+// Gets light for directional lights. If hasShadow == 1 then shadows are on, otherwise they are off 
+float getDirLight(Intersection intersection, DirectionalLight light, out int objID)
 {
-    // Lambert shading
-    // Calculate the diffuse term for Lambert shading
-    float diffuseTerm = dot(normalize(intersection.normal), light_dir);
-    diffuseTerm = clamp(diffuseTerm, 0.0, 1.0);
+    // Diffuse shading
+    float diffuse = dot(normalize(intersection.normal), light.dir);
+    diffuse = clamp(diffuse, 0.0, 1.0);
 
-    float ambientTerm = 0.2;
-    float lightIntensity = diffuseTerm + ambientTerm;
+    // Specular shading
+    vec3 reflectDir = reflect(-light.dir, intersection.normal);
+    vec3 look = normalize(u_Ref - u_Eye);
+    float spec = pow(max(dot(look, reflectDir), 0.0), 0.0);
 
     // Calculate shadows
-    float shadow = shadow(intersection.position, light_dir, 50.0, 30.0, objID);   //float shadow = 1.0;
-    shadow = clamp(shadow, 0.3, 1.0);
+    float shadowVal = 1.0;
+    if (light.hasShadow == 1) {
+        shadowVal = shadow(intersection.position, light.dir, 50.0, 30.0, objID);   //float shadow = 1.0;
+        shadowVal = clamp(shadowVal, 0.3, 1.0);
+    }
 
-    return lightIntensity * shadow;
+    return (diffuse + light.ambient + spec) * shadowVal;
 }
 
 float getPointLight(Intersection intersection, vec3 light_pos, out int objID)
@@ -364,46 +378,58 @@ float getPointLight(Intersection intersection, vec3 light_pos, out int objID)
 
 vec3 computeMaterial(Intersection intersection, out int objID) {
 
+    vec3 warmCol = vec3(1.0, 0.88, 0.8);
     DirectionalLight warmLight = DirectionalLight(normalize(vec3(1.0, 0.5, 1.0)),
-                                vec3(1.0, 0.88, 0.8));
-    DirectionalLight coolLight = DirectionalLight(normalize(vec3(1.0, 0.5, -1.0)),
-                                vec3(0.8, 0.88, 1.0));
-    DirectionalLight topLight = DirectionalLight(normalize(vec3(0.0, 1.0, 0.0)),
-                                vec3(0.8, 0.88, 1.0));
+                                warmCol, 0.2, 0.0, 0);
+
+    vec3 coolCol = vec3(0.8, 0.88, 1.0);                           
+    DirectionalLight coolLight = DirectionalLight(normalize(vec3(1.0, 0.5, -0.5)),
+                                coolCol, 0.2, 0.0, 1);
+
+    vec3 topCol = vec3(0.8, 0.88, 0.9);
+    DirectionalLight topLight = DirectionalLight(normalize(vec3(0.0, 0.5, 0.0)),
+                                topCol, 0.2, 0.0, 1);
                                 
     vec3 albedo;
-	switch(objID)
+
+    // Create materials
+    Material floorMat = Material(rgb(vec3(230.0, 189.0, 181.0)), 0.0, 0.0);
+    Material cylinderMat = Material(rgb(vec3(235.0, 126.0, 126.0)), 0.0, 0.0);
+    Material gongMat = Material(rgb(vec3(250.0, 250.0, 250.0)), 0.0, 0.0);
+	Material pendulumMat = Material(rgb(vec3(232.0, 161.0, 86.0)), 0.0, 0.0);
+
+    switch(objID)
     {
         case -1: // not any object
             albedo = rgb(vec3(100.0));
             break;
             
         case 1: // floor
-            albedo = rgb(vec3(230.0, 189.0, 181.0));
+            albedo = floorMat.color;
             break;
 
         case 2: // cylinders
-            albedo = rgb(vec3(235.0, 126.0, 126.0));
+            albedo = cylinderMat.color;
             break;
 
         case 3: // gongs
-            albedo = rgb(vec3(250.0, 250.0, 250.0));
+            albedo = gongMat.color;
             break;
 
         case 4: // pendulum
-            albedo = rgb(vec3(232.0, 161.0, 86.0));
+            albedo = pendulumMat.color;
             break;
     }
 
     vec3 light1_pos = vec3(15.0, 17.0, -2.0);
     float light1 = getPointLight(intersection, light1_pos, objID);
 
-    vec3 color = albedo * 0.7 * warmLight.color * getDirLight(intersection, warmLight.dir, objID);
+    vec3 totalLight = 0.7 * warmLight.color * getDirLight(intersection, warmLight, objID);
 
-    color += albedo * 0.7 * coolLight.color * getDirLight(intersection, coolLight.dir, objID);
-    color = albedo * topLight.color * getDirLight(intersection, topLight.dir, objID);
+    totalLight += 0.7 * coolLight.color * getDirLight(intersection, coolLight, objID);
+    totalLight += 0.3 * topLight.color * getDirLight(intersection, topLight, objID);
 
-    
+    vec3 color = albedo * totalLight;
     return color;
 }
 
