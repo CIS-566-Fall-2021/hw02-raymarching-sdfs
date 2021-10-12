@@ -20,7 +20,7 @@ const float MAX_RAY_LENGTH = 20.0;
 
 // COLORS
 const vec3 MUG_COLOR = vec3(102.0, 153.0, 204.0) / 255.0;
-const vec3 SCISSORS_COLOR = vec3(1.0, 0.0, 0.0);
+const vec3 SCISSORS_COLOR = vec3(1.0, 1.0, 0.0);
 const vec3 FLOOR_COLOR = vec3(0.7);
 const vec3 backgroundColor = vec3(0.2);
 
