@@ -101,7 +101,8 @@ float differenceSDF(float distA, float distB) {
 
 
 #define GEAR_SECTOR 12.0
-float gearSDF(vec3 p, float speed)
+#define GRID_SIZE 1.
+float gearSDF(vec3 p)
 {
     // float t = speed*0.05*sin(0.1*u_Time);
     // p.xy = mat2(cos(t),-sin(t),
@@ -112,11 +113,11 @@ float gearSDF(vec3 p, float speed)
     float lpxy=length(p.xy);
     float d=10000.;
     float ang=atan(p.y,p.x);
-    float outer_radius = 0.8;
-    float height = 0.1;
-    float inner_radius = 0.5;
+    float outer_radius = sin(PI2/8.)*0.5+0.015;
+    float height = 0.05;
+    float inner_radius = 0.1;
 
-    d=min(d,length(p+vec3(p.xy/lpxy,0.)*.1*sin(ang*GEAR_SECTOR))-outer_radius);
+    d=min(d,length(p+vec3(p.xy/lpxy,0.)*.04*sin(ang*GEAR_SECTOR))-outer_radius);
     d=smax(d,abs(p.z)-height,0.01);
     d=smax(d,inner_radius-lpxy,0.01);
     return d;
@@ -142,39 +143,48 @@ vec4 axAng2Quat(vec3 ax, float ang)
 }
 #define Z_AXIS vec3(0.0,0.0,1.0)
 #define X_AXIS vec3(1.0,0.0,0.0)
-#define Y_AXIS vec3(0.0,1.0,1.0)
+#define Y_AXIS vec3(0.0,1.0,0.0)
+#define YZ_AXIS vec3(0.0,1.0,1.0)
 float gearRepeat(vec3 p){
 
-    vec3 p1 = p;
-    vec4 q1 = axAng2Quat(Z_AXIS,0.05*u_Time);
-    vec4 q2 = axAng2Quat(X_AXIS,PI2/2.*sin(0.01*u_Time));
-    q2 = multQuat(q1,q2);
-    p1 = transformVecByQuat(p1,q2);
-    float g1 = gearSDF(p1,1.0);
-    float dis = 1.55;
-    vec3 p2 = p - vec3(dis,0.0,0.0);
-    q1 = axAng2Quat(Z_AXIS,-0.05*u_Time);
-    q2 = axAng2Quat(X_AXIS,PI2/2.*sin(0.01*u_Time));
-    q2 = multQuat(q1,q2);
-    p2 = transformVecByQuat(p2,q2);
-    float g2 = gearSDF(p2,-1.0);
-    
-    vec3 p3 = p + vec3(dis,0.0,0.0);
-    p3 = transformVecByQuat(p3,q2);
-    float g3 = gearSDF(p3,-1.0);
-    return min(g1,min(g2,g3));
+    vec4 q = axAng2Quat(Z_AXIS,0.*0.01*u_Time);
+    q =  multQuat(q,axAng2Quat(Y_AXIS,0.*PI2/4.));
+    vec3 p1 = transformVecByQuat(p,q);
+
+    float g1 = gearSDF(p1);
+    q = axAng2Quat(Z_AXIS,-0.*0.01*u_Time);
+    vec3 p2 = transformVecByQuat(p+vec3(1.0-0.63,-0.63,0.),q);
+    float g2 = gearSDF(p2);
+    vec3 p3 = p+vec3(1.0,-1.0,0.);
+    q = axAng2Quat(Z_AXIS,0.*0.01*u_Time);
+    q =  multQuat(q,axAng2Quat(X_AXIS,0.*PI2/4.)); 
+    p3 = transformVecByQuat(p3,q);
+    float g3 = gearSDF(p3);
+
+
+    return min(min(g1,g2),g3);
+}
+float hash(float n) { return fract(sin(n) * 1e4); }
+
+float firstset(vec3 p){
+    p = p + vec3(-1.,0.0,-1.0);
+    float d = gearRepeat(p);
+    vec3 p0 = p*vec3(-1.,1.,1.);
+    d = min(d,gearRepeat(p0.zyx+vec3(-1.,-1.,0.)));
+
+    vec3 p1 = p*vec3(-1.,1.,1.);
+    d = min(d,gearRepeat(p1.xzy+vec3(0.,1.,-1.)));
+    return d;
 }
 float sceneSDF(vec3 p){
-    float s = sdfPlane(p,-4.0);
-    float size =  3.1;
-    
-    float mod_z = mod(p.z,2.0)-1.0;
-    float rot = floor(abs(p.z/2.0));
-    vec4 q = axAng2Quat(Z_AXIS,PI2/8.0);
-    p = transformVecByQuat(p,q);
-    float mod_x = mod(p.x,size)-size/2.;
-    vec3 mod_p = vec3(mod_x,p.y,mod_z);
-    return min(gearRepeat(mod_p),s);
+    vec3 mod_p;
+    mod_p = mod(p,2.);
+    vec3 id = floor(mod(p,2.))*2.-1.;
+    mod_p = p;
+    float d = firstset(mod_p);
+    float d2 = firstset(mod_p+vec3(2.,0.,0.));
+    d = min(d,d2);
+    return d;
 }
 
 float hardShadow(vec3 rayOrigin, vec3 rayDirection, float minT, float maxT)
@@ -234,7 +244,6 @@ Intersection getRaymarchedIntersection(vec2 uv)
 
     for (int i = 0; i < MAX_MARCHING_STEPS; i++) {
         vec3 p = r.origin + depth * r.direction;
-        
         float dist = sceneSDF(p);
         if (dist < EPSILON) {
             // We're inside the scene surface!
@@ -250,6 +259,7 @@ Intersection getRaymarchedIntersection(vec2 uv)
     intersection.distance_t = -1.0;
     return intersection;
 }
+
 
 vec3 phongContribForLight(vec3 k_d, vec3 k_s, float alpha, vec3 p, vec3 eye,
                           vec3 lightPos, vec3 lightIntensity) {
