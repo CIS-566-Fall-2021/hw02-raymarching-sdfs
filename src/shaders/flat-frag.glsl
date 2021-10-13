@@ -34,15 +34,21 @@ struct DirectionalLight
     vec3 dir;
     vec3 color;
     float ambient;
-    float specular;
+    float specular; // ranges 0 to 1 depending on how much specularity you want
     int hasShadow; // 1 if it casts a shadow, 0 if it doesn't cast a shadow
 };
 
 struct Material
 {
     vec3 color;
-    float shininess;
     float specular;
+    float shininess;
+};
+
+struct Object
+{
+    Material material;
+    int id;
 };
 
 // Operations
@@ -184,14 +190,14 @@ float sdCappedTorus(vec3 query_position, vec3 pos, vec2 sc, float ra, float rb)
     return sqrt( dot(q,q) + ra*ra - 2.0*ra*k ) - rb;
 }
 
-float sdfGong(vec3 query_position, vec3 pos, mat3 gongTransform) {
+float sdfGong(vec3 query_position, vec3 pos, mat3 gongTransform, out float innerGong, out float baseGong, out float beams) {
     float gongRadius = 0.7;
     float gongDepth = 0.1;
 
     vec3 gongPos = gongTransform * pos;
     vec3 gongQuery = gongTransform * query_position;
-    float base = sdfRoundedCylinder(gongQuery, gongPos, gongRadius, 0.05, gongDepth);
-    float innerGong = sdfRoundedCylinder(gongQuery, gongPos, gongRadius * 0.7, 0.05, gongDepth * 1.1);
+    baseGong = sdfRoundedCylinder(gongQuery, gongPos, gongRadius, 0.05, gongDepth);
+    innerGong = sdfRoundedCylinder(gongQuery, gongPos, gongRadius * 0.7, 0.05, gongDepth * 1.1);
 
     vec3 beamSize_h = vec3(2.3, 0.1, 0.1);
     vec3 beamSize_v = vec3(0.08, 3.0, 0.08);
@@ -201,27 +207,27 @@ float sdfGong(vec3 query_position, vec3 pos, mat3 gongTransform) {
     float beam_v1 = sdfRoundBox(query_position, vec3(pos.x - 1.8, pos.y, pos.z), beamSize_v, 0.03);
     float beam_v2 = sdfRoundBox(query_position, vec3(pos.x + 1.8, pos.y, pos.z), beamSize_v, 0.03);
 
-    float gong =  smin(base, innerGong, 0.2);
+    float gong =  smin(baseGong, innerGong, 0.2);
     float beamsHorizontal = min(beam_h1, min(beam_h2, beam_h3));
     float beamsVertical = min(beam_v1, beam_v2);
-    float beams = smin(beamsVertical, beamsHorizontal, 0.05);
+    beams = smin(beamsVertical, beamsHorizontal, 0.05);
     return min(gong, beams);
 }
 
-float sceneSDF(vec3 queryPos, out int objID) 
+float sceneSDF(vec3 queryPos, out Object obj) 
 {
     vec3 center = vec3(0.0, 0.0, 0.0);
     vec3 floorPos = vec3(0.0, 0.0, 0.0);
     float floorHeight = 1.0;
     float floorPlane = sdfPlane(queryPos, floorPos, vec3(0.0, 1.0, 0.0), floorHeight);
-    float zPlane = sdfPlane(queryPos, vec3(floorPos.x - 50.0, floorPos.y, floorPos.z), vec3(1.0, 0.0, 0.0), floorHeight);
+    float zPlane = sdfPlane(queryPos, vec3(floorPos.x + 50.0, floorPos.y, floorPos.z), vec3(-1.0, 0.0, 0.0), floorHeight);
     float yPlane = sdfPlane(queryPos, vec3(floorPos.x, floorPos.y, floorPos.z - 50.0), vec3(0.0, 0.0, 1.0), floorHeight);
     float walls = smin(yPlane, zPlane, 0.5);
     float floorAndWalls = smin(floorPlane, walls, 0.5);
 
-    objID = 1;
+    obj.id = 1;
 
-    // implement bounding sphere to optimize
+    // Implement bounding sphere to optimize
     float bounding_box= sdfBox(queryPos, center, vec3(10.0));
     if (bounding_box < EPSILON) {
 
@@ -261,8 +267,11 @@ float sceneSDF(vec3 queryPos, out int objID)
         mat3 gong1Transform = rotationX(PI/2.0);
         vec3 gong2Pos = vec3(0.0, 1.5, -5.6);
         mat3 gong2Transform = rotationX(3.0 * PI / 2.0);
-        float gong1 = sdfGong(queryPos, gong1Pos, gong1Transform);
-        float gong2 = sdfGong(queryPos, gong2Pos, gong2Transform);
+        float innerGong;
+        float baseGong;
+        float beams;
+        float gong1 = sdfGong(queryPos, gong1Pos, gong1Transform, innerGong, baseGong, beams);
+        float gong2 = sdfGong(queryPos, gong2Pos, gong2Transform, innerGong, baseGong, beams);
 
         // Put it all together
         floorPlane = opSmoothSubtraction(floorCylinders, floorPlane, 0.05);
@@ -270,17 +279,15 @@ float sceneSDF(vec3 queryPos, out int objID)
         float allCylinders = min(cylinders, floorAndWalls);
         float gongs = min(gong1, gong2);
         float pendulumAndGongs = min(pendulum, gongs);
-        float testSphere = sdfSphere(queryPos, vec3(limitB.x + cylinder_r * 2.0, limitA.y, limitA.z), 0.1);
 
         // Assign object materials
         float final = min(allCylinders, pendulumAndGongs);
 
-        if (final == floorPlane) {objID = 1;}
-        else if (final == cylinders) {objID = 2;}
-        else if (final == gongs) {objID = 3;}
-        else if (final == pendulum) {objID = 4;}
+        if (final == floorPlane) { obj.id = 1;}
+        else if (final == cylinders) {obj.id = 2;}
+        else if (final == gongs) {obj.id = 3;}
+        else if (final == pendulum) {obj.id = 4;}
 
-        //return min(allCylinders, testSphere);
         return final;
     }
     return floorAndWalls;
@@ -306,24 +313,24 @@ Ray getRay(vec2 uv)
     return r;
 }
 
-vec3 estimateNormal(vec3 p, out int objID)
+vec3 estimateNormal(vec3 p, out Object obj)
 {
     vec2 d = vec2(0.0, EPSILON);
-    float x = sceneSDF(p + d.yxx, objID) - sceneSDF(p - d.yxx, objID);
-    float y = sceneSDF(p + d.xyx, objID) - sceneSDF(p - d.xyx, objID);
-    float z = sceneSDF(p + d.xxy, objID) - sceneSDF(p - d.xxy, objID);
+    float x = sceneSDF(p + d.yxx, obj) - sceneSDF(p - d.yxx, obj);
+    float y = sceneSDF(p + d.xyx, obj) - sceneSDF(p - d.xyx, obj);
+    float z = sceneSDF(p + d.xxy, obj) - sceneSDF(p - d.xxy, obj);
 
     return normalize(vec3(x, y, z));
 }
 
 // Light and Shadows
-float shadow(vec3 ro, vec3 rd, float maxt, float k, out int objID)
+float shadow(vec3 ro, vec3 rd, float maxt, float k, out Object obj)
 {
     float res = 1.0;
     for(float t=0.015; t<maxt;) 
     {
         vec3 queryPoint = ro + rd * t;
-        float currDistance = sceneSDF(queryPoint, objID);
+        float currDistance = sceneSDF(queryPoint, obj);
 
         if (currDistance < 0.001){
             return 0.0;
@@ -336,28 +343,29 @@ float shadow(vec3 ro, vec3 rd, float maxt, float k, out int objID)
 }
 
 // Gets light for directional lights. If hasShadow == 1 then shadows are on, otherwise they are off 
-float getDirLight(Intersection intersection, DirectionalLight light, out int objID)
+float getDirLight(Intersection intersection, DirectionalLight light, out Object obj)
 {
     // Diffuse shading
     float diffuse = dot(normalize(intersection.normal), light.dir);
     diffuse = clamp(diffuse, 0.0, 1.0);
 
     // Specular shading
-    vec3 reflectDir = reflect(-light.dir, intersection.normal);
     vec3 look = normalize(u_Ref - u_Eye);
-    float spec = pow(max(dot(look, reflectDir), 0.0), 0.0);
+    vec3 reflectDir = reflect(light.dir, intersection.normal);  
+    float spec = pow(max(dot(reflectDir, look), 0.0), 1.0 / obj.material.shininess); // why is my shininess inverted...?
+    float specular = light.specular * obj.material.specular * spec;
 
     // Calculate shadows
     float shadowVal = 1.0;
     if (light.hasShadow == 1) {
-        shadowVal = shadow(intersection.position, light.dir, 50.0, 30.0, objID);   //float shadow = 1.0;
+        shadowVal = shadow(intersection.position, light.dir, 50.0, 30.0, obj);
         shadowVal = clamp(shadowVal, 0.3, 1.0);
     }
 
-    return (diffuse + light.ambient + spec) * shadowVal;
+    return (diffuse + light.ambient + specular) * shadowVal;
 }
 
-float getPointLight(Intersection intersection, vec3 light_pos, out int objID)
+float getPointLight(Intersection intersection, vec3 light_pos, out Object obj)
 {
     // Lambert shading
     vec3 light_dir = normalize(light_pos - intersection.position);
@@ -370,66 +378,66 @@ float getPointLight(Intersection intersection, vec3 light_pos, out int objID)
     float lightIntensity = diffuseTerm + ambientTerm;
 
     // Calculate shadows
-    float shadow = shadow(intersection.position, light_dir, 100.0, 80.0, objID);   //float shadow = 1.0;
+    float shadow = shadow(intersection.position, light_dir, 100.0, 80.0, obj);   //float shadow = 1.0;
     shadow = clamp(shadow, 0.4, 1.0);
 
     return lightIntensity * shadow;
 }
 
-vec3 computeMaterial(Intersection intersection, out int objID) {
+vec3 computeMaterial(Intersection intersection, out Object obj) {
 
     vec3 warmCol = vec3(1.0, 0.88, 0.8);
     DirectionalLight warmLight = DirectionalLight(normalize(vec3(1.0, 0.5, 1.0)),
                                 warmCol, 0.2, 0.0, 0);
 
     vec3 coolCol = vec3(0.8, 0.88, 1.0);                           
-    DirectionalLight coolLight = DirectionalLight(normalize(vec3(1.0, 0.5, -0.5)),
-                                coolCol, 0.2, 0.0, 1);
+    DirectionalLight coolLight = DirectionalLight(normalize(vec3(-3.0, 0.5, -2.0)),
+                                coolCol, 0.2, 1.0, 1);
 
     vec3 topCol = vec3(0.8, 0.88, 0.9);
     DirectionalLight topLight = DirectionalLight(normalize(vec3(0.0, 0.5, 0.0)),
-                                topCol, 0.2, 0.0, 1);
+                                topCol, 0.2, 0.0, 0);
                                 
     vec3 albedo;
 
     // Create materials
     Material floorMat = Material(rgb(vec3(230.0, 189.0, 181.0)), 0.0, 0.0);
-    Material cylinderMat = Material(rgb(vec3(235.0, 126.0, 126.0)), 0.0, 0.0);
+    Material cylinderMat = Material(rgb(vec3(235.0, 126.0, 126.0)), 1.0, 0.04);
     Material gongMat = Material(rgb(vec3(250.0, 250.0, 250.0)), 0.0, 0.0);
-	Material pendulumMat = Material(rgb(vec3(232.0, 161.0, 86.0)), 0.0, 0.0);
+	Material pendulumMat = Material(rgb(vec3(232.0, 161.0, 86.0)), 2.0, 0.015);
 
-    switch(objID)
+    switch(obj.id)
     {
         case -1: // not any object
-            albedo = rgb(vec3(100.0));
+            obj.material = floorMat;
             break;
             
         case 1: // floor
-            albedo = floorMat.color;
+            obj.material = floorMat;
             break;
 
         case 2: // cylinders
-            albedo = cylinderMat.color;
+            obj.material = cylinderMat;
             break;
 
         case 3: // gongs
-            albedo = gongMat.color;
+            obj.material = gongMat;
             break;
 
         case 4: // pendulum
-            albedo = pendulumMat.color;
+            obj.material = pendulumMat;
             break;
     }
 
     vec3 light1_pos = vec3(15.0, 17.0, -2.0);
-    float light1 = getPointLight(intersection, light1_pos, objID);
+    float light1 = getPointLight(intersection, light1_pos, obj);
 
-    vec3 totalLight = 0.7 * warmLight.color * getDirLight(intersection, warmLight, objID);
+    vec3 totalLight = 0.7 * warmLight.color * getDirLight(intersection, warmLight, obj);
 
-    totalLight += 0.7 * coolLight.color * getDirLight(intersection, coolLight, objID);
-    totalLight += 0.3 * topLight.color * getDirLight(intersection, topLight, objID);
+    totalLight += 0.9 * coolLight.color * getDirLight(intersection, coolLight, obj);
+    totalLight += 0.3 * topLight.color * getDirLight(intersection, topLight, obj);
 
-    vec3 color = albedo * totalLight;
+    vec3 color = obj.material.color * totalLight;
     return color;
 }
 
@@ -441,18 +449,18 @@ Intersection getRaymarchedIntersection(vec2 uv)
 
     Ray r = getRay(uv);
     float t = 0.0;
-    int objID;
+    Object obj;
 
     for(int step; step < MAX_RAY_STEPS; ++step) 
     {
         vec3 queryPoint = r.origin + r.direction * t;
-        float currDistance = sceneSDF(queryPoint, objID);
+        float currDistance = sceneSDF(queryPoint, obj);
         if (currDistance < EPSILON) {
             // found an intersection
             intersection.distance_t = t;
-            intersection.normal = estimateNormal(queryPoint, objID);
+            intersection.normal = estimateNormal(queryPoint, obj);
             intersection.position = queryPoint;
-            vec3 material = computeMaterial(intersection, objID);
+            vec3 material = computeMaterial(intersection, obj);
             intersection.color = material;
             return intersection;
         }
