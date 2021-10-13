@@ -7,6 +7,7 @@ Pennkey: onlyname
 ## Overview
 * **Leaning Tower of Pisa Recreation**
 <img src="Pisa1.png" width="800"/>
+
 * **Inspiration**
 <img src="pisa-leaning-tower1.jpg" width="800"/>
 
@@ -18,8 +19,4 @@ The Tower of Pisa was recreated using a fragment shader that rendered the scene 
 ## Citations
 [Useful SDF Transformations](http://jamie-wong.com/2016/07/15/ray-marching-signed-distance-functions/#rotation-and-translation)
 
-<<<<<<< HEAD
 [SDF Functions](https://www.iquilezles.org/www/articles/distfunctions/distfunctions.htm)
-=======
-[SDF Functions](https://www.iquilezles.org/www/articles/distfunctions/distfunctions.htm)
->>>>>>> d6d1f4369c6f85aa7c0591fc6ca457dd133f45f7
