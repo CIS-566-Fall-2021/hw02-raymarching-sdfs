@@ -19,7 +19,7 @@ const float HALF_PI = 1.570796327;
 const float MAX_RAY_LENGTH = 12.0;
 
 // COLORS
-const vec3 MUG_COLOR = vec3(140.0, 138.0, 132.0) / 255.0;
+const vec3 MUG_COLOR = vec3(140.0, 150.0, 170.0) / 255.0 * 0.8;
 const vec3 SCISSORS_COLOR = vec3(196.0, 202.0, 206.0) / 255.0;
 const vec3 FLOOR_COLOR = vec3(91.0, 96.0, 101.0) / 255.0 * 0.5;
 const vec3 GOLD_COLOR = vec3(215.0, 190.0, 105.0) / 255.0;
@@ -300,13 +300,11 @@ float sceneSDFMug(vec3 queryPos) {
 }
 
 vec3 animateHorizontal(vec3 p) {
-    // return p + vec3(8.0, 0.0, 0.0) * (GetBias(sin(u_Time * .025) + 1.0, 0.7) - 0.5);
-    return p;
+     return p + vec3(8.0, 0.0, 0.0) * (GetBias(sin(u_Time * .025) + 1.0, 0.7) - 0.5);
 }
 
 vec3 animateYRotation(vec3 p) {
-   // return transpose(rotation3dY(GetGain((.5 * sin(u_Time * .025) + 0.5), 0.7) * 6.0)) * p;
-   return p;
+    return transpose(rotation3dY(GetGain((.5 * sin(u_Time * .025) + 0.5), 0.7) * 6.0)) * p;
 }
 
 float sceneSDF(vec3 queryPos, out int hitObj) 
