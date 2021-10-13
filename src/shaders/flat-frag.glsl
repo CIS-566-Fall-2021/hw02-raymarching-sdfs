@@ -84,6 +84,12 @@ float sdRoundBox( vec3 p, vec3 b, float r )
   return length(max(q,0.0)) + min(max(q.x,max(q.y,q.z)),0.0) - r;
 }
 
+float sdBox( vec3 p, vec3 b )
+{
+  vec3 q = abs(p) - b;
+  return length(max(q,0.0)) + min(max(q.x,max(q.y,q.z)),0.0);
+}
+
 float sdTorus( vec3 p, vec2 t )
 {
   vec2 q = vec2(length(p.xz)-t.x,p.y);
@@ -305,27 +311,29 @@ vec3 animateYRotation(vec3 p) {
 
 float sceneSDF(vec3 queryPos, out int hitObj) 
 {   
+    // PLANE
+    float t = sdfPlane(queryPos, WORLD_UP, 1.5);
+    hitObj = 2;
+    
     // Bounding sphere, so we only have to check for geometry within certain bounds
-    float bounding_sphere_dist = sdfSphere(queryPos, vec3(0.0), 12.0);
-    if(bounding_sphere_dist <= EPSILON) {
+    float bounding_box_dist = sdBox(queryPos, vec3(12.0));
+    if(bounding_box_dist <= .00001) {
 
     // MUG
-    float t = sceneSDFMug(animateHorizontal((queryPos)));
-    hitObj = 0;
-
+    float t2 = sceneSDFMug(animateHorizontal((queryPos)));
+    if (t2 < t) {
+        t = t2;
+        hitObj = 0;
+    }
+   
     // SCISSORS
-    float t2 = min(t, sceneSDFScissors(animateYRotation(animateHorizontal(queryPos))));
+    t2 = min(t, sceneSDFScissors(animateYRotation(animateHorizontal(queryPos))));
     if (t2 < t) {
         t = t2;
         hitObj = 1;
     }
 
-    // PLANE
-    t2 = min(t, sdfPlane(queryPos, WORLD_UP, 1.5));
-    if (t2 < t) {
-        t = t2;
-        hitObj = 2;
-    }
+    
 
     // MUG LIP
     t2 = smin(t, sceneSDFMugLip(animateHorizontal((queryPos))), .05);
@@ -336,7 +344,8 @@ float sceneSDF(vec3 queryPos, out int hitObj)
 
     return t;
     }
-    return bounding_sphere_dist;
+    hitObj = -2;
+    return bounding_box_dist;
 }
 
 vec3 estimateNormal(vec3 p, out int hitObj) {
@@ -402,15 +411,17 @@ Intersection getRaymarchedIntersection(vec2 uv, out int hitObj)
 // SHADING ------------------------------------------------------------------------------------------------------------
 
 float softShadow(vec3 dir, vec3 origin, float min_t, out int hitObj) {
-    float k = 6.0;
+    float k = 20.0;
     float res = 1.0;
     float t = min_t;
-    for(int i = 0; i < MAX_RAY_STEPS; i++) {
+    for(float i = min_t; i < float(100.0); i+=1.0) {
         float m = sceneSDF(origin + t * dir, hitObj);
         if(m < 0.0001) {
             return 0.0;
         }
+        if (hitObj != -2) {
         res = min(res, k * m / t);
+        }
         t += m;
     }
     return res;
@@ -450,13 +461,19 @@ vec3 computeMaterial(int hitObj, vec3 p, vec3 n) {
         case -1:
         return backgroundColor;
         break;
+        case -2: 
+        return backgroundColor;
+        break;
     }
     
     // create shadows
-    vec3 color = albedo *
+    vec3 color = vec3(0.0);
+
+    color = albedo *
                  LIGHT_COLOR *
                  max(0.0, dot(n, normalize(LIGHT_POS - p))) *
-                 softShadow(normalize(LIGHT_POS- p), p, 0.1, hitObj);
+                 softShadow(normalize(LIGHT_POS - p), p, 1.0, hitObj);
+
 
     // fake global illumination
     color += albedo * LIGHT_COLOR * max(0.0, dot(n, normalize(LIGHT_POS - p))); // shadow-casting light
