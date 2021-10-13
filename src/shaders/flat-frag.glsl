@@ -16,7 +16,7 @@ const vec3 WORLD_UP = vec3(0.0, 1.0, 0.0);
 const vec3 WORLD_RIGHT = vec3(-1.0, 0.0, 0.0);
 const vec3 WORLD_FORWARD = vec3(0.0, 0.0, 1.0);
 const float HALF_PI = 1.570796327;
-const float MAX_RAY_LENGTH = 20.0;
+const float MAX_RAY_LENGTH = 12.0;
 
 // COLORS
 const vec3 MUG_COLOR = vec3(140.0, 138.0, 132.0) / 255.0;
@@ -294,7 +294,7 @@ float sceneSDFMug(vec3 queryPos) {
 }
 
 vec3 animateHorizontal(vec3 p) {
-    return p + vec3(12.0, 0.0, 0.0) * (GetBias(sin(u_Time * .25) + 1.0, 0.7) - 0.5);
+    return p + vec3(8.0, 0.0, 0.0) * (GetBias(sin(u_Time * .25) + 1.0, 0.7) - 0.5);
 }
 
 vec3 animateYRotation(vec3 p) {
@@ -303,6 +303,7 @@ vec3 animateYRotation(vec3 p) {
 
 float sceneSDF(vec3 queryPos, out int hitObj) 
 {   
+
     // MUG
     float t = sceneSDFMug(animateHorizontal((queryPos)));
     hitObj = 0;
