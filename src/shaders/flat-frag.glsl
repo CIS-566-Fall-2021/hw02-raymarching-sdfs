@@ -237,21 +237,20 @@ float sceneSDF(vec3 queryPos, out Object obj)
         // Set bounds of the repeating shelf blocks
         vec3 limitA = vec3(-1.0, 0.0, -1.0) * cylinderBlockSize;
         vec3 limitB = vec3(1.0, 0.0, 1.0) * cylinderBlockSize;
-        vec3 repSize = abs(limitA - limitB);
-        vec3 repSpace = vec3(1.0);
-        vec3 repeatingPos = opRepLim(queryPos, repSpace, limitA, limitB);
+        float repSpace = 0.9;
+        vec3 repeatingPos = opRepLim(queryPos, vec3(repSpace), limitA, limitB);
         
         vec3 floorCylinder_p = vec3(0.0, -1.0, 0.0);
         float floorCylinder_h = 2.0;
-        float floorCylinder_r = 0.155;
+        float floorCylinder_r = 0.15;
         float floorCylinder_edge = 0.1;
         float floorCylinders = sdfRoundedCylinder(repeatingPos, floorCylinder_p, floorCylinder_r, floorCylinder_edge, floorCylinder_h);
 
         vec3 cylinder_p = vec3(0.0, -1.0, 0.0);
-        float cylinder_r = 0.15;
-        float stair_length = 1.0;
+        float cylinder_r = floorCylinder_r * 0.9;
+        float stair_length = repSpace;
         float stair_freq = 0.5;
-        float stair_val = 0.05 * u_Time + floor((queryPos.x - (repSpace.x + cylinder_r * 2.0) - 0.02) / stair_length) + 2.0;
+        float stair_val = 0.05 * u_Time + floor((queryPos.x - (repSpace + cylinder_r * 2.0) - 0.02) / stair_length) + 2.0;
         float dynamic_height = cos(stair_freq* stair_val);
         float cylinder_h = 1.0 + dynamic_height;
         float cylinder_edge = 0.05;
@@ -375,25 +374,6 @@ float getDirLight(Intersection intersection, DirectionalLight light, out Object 
     return (diffuse + light.ambient + specular) * shadowVal;
 }
 
-float getPointLight(Intersection intersection, vec3 light_pos, out Object obj)
-{
-    // Lambert shading
-    vec3 light_dir = normalize(light_pos - intersection.position);
-
-    // Calculate the diffuse term for Lambert shading
-    float diffuseTerm = dot(normalize(intersection.normal), light_dir);
-    diffuseTerm = clamp(diffuseTerm, 0.0, 1.0);
-
-    float ambientTerm = 0.2;
-    float lightIntensity = diffuseTerm + ambientTerm;
-
-    // Calculate shadows
-    float shadow = shadow(intersection.position, light_dir, 100.0, 80.0, obj);   //float shadow = 1.0;
-    shadow = clamp(shadow, 0.4, 1.0);
-
-    return lightIntensity * shadow;
-}
-
 vec3 computeMaterial(Intersection intersection, out Object obj) {
 
     vec3 warmCol = vec3(1.0, 0.88, 0.8);
@@ -448,9 +428,6 @@ vec3 computeMaterial(Intersection intersection, out Object obj) {
             obj.material = pendulumMat;
             break;
     }
-
-    vec3 light1_pos = vec3(15.0, 17.0, -2.0);
-    float light1 = getPointLight(intersection, light1_pos, obj);
 
     vec3 totalLight = 0.7 * warmLight.color * getDirLight(intersection, warmLight, obj);
 
