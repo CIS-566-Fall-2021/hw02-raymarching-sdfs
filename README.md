@@ -18,6 +18,8 @@ Source Image:
 - Lambertian shading is applied to all materials
 - soft shadows are cast by SDF primitives
 - Scissors and objects are animated by moving their local origins according to time modified by Bias and Gain functions, for smoother, non-linear motion.
+- Features three different lights: one to cast shadows, one to provide ambient light, and one to serve as a fill light
+- Rendering optimized to allow for smoother animation by limiting how long rays can extend during ray-marching and only checking for scene geometry (during ray-marching and shadow-marching) within a bounding box
 
 
 # External Sources:
@@ -34,6 +36,8 @@ Source Image:
 https://user-images.githubusercontent.com/60444726/136304635-f42c05d8-0661-4741-a4df-19935e79727d.mp4
 
 # Bloopers:
+
+Pinocchio Scene: Issue caused by allowing the bounding box to cast shadows on the scene
 
 ![wooden bug](https://user-images.githubusercontent.com/60444726/137224445-b18101aa-21ef-42b4-81d6-0970a217e678.png)
 
