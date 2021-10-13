@@ -21,7 +21,7 @@ const float MAX_RAY_LENGTH = 12.0;
 // COLORS
 const vec3 MUG_COLOR = vec3(140.0, 138.0, 132.0) / 255.0;
 const vec3 SCISSORS_COLOR = vec3(196.0, 202.0, 206.0) / 255.0;
-const vec3 FLOOR_COLOR = vec3(91.0, 96.0, 101.0) / 255.0;
+const vec3 FLOOR_COLOR = vec3(91.0, 96.0, 101.0) / 255.0 * 0.5;
 const vec3 GOLD_COLOR = vec3(215.0, 190.0, 105.0) / 255.0;
 const vec3 backgroundColor = vec3(0.2);
 
@@ -294,15 +294,20 @@ float sceneSDFMug(vec3 queryPos) {
 }
 
 vec3 animateHorizontal(vec3 p) {
-    return p + vec3(8.0, 0.0, 0.0) * (GetBias(sin(u_Time * .25) + 1.0, 0.7) - 0.5);
+    // return p + vec3(8.0, 0.0, 0.0) * (GetBias(sin(u_Time * .025) + 1.0, 0.7) - 0.5);
+    return p;
 }
 
 vec3 animateYRotation(vec3 p) {
-    return transpose(rotation3dY(GetGain((.5 * sin(u_Time * .25) + 0.5), 0.7) * 6.0)) * p;
+   // return transpose(rotation3dY(GetGain((.5 * sin(u_Time * .025) + 0.5), 0.7) * 6.0)) * p;
+   return p;
 }
 
 float sceneSDF(vec3 queryPos, out int hitObj) 
 {   
+    // Bounding sphere, so we only have to check for geometry within certain bounds
+    float bounding_sphere_dist = sdfSphere(queryPos, vec3(0.0), 12.0);
+    if(bounding_sphere_dist <= EPSILON) {
 
     // MUG
     float t = sceneSDFMug(animateHorizontal((queryPos)));
@@ -330,6 +335,8 @@ float sceneSDF(vec3 queryPos, out int hitObj)
     }
 
     return t;
+    }
+    return bounding_sphere_dist;
 }
 
 vec3 estimateNormal(vec3 p, out int hitObj) {
@@ -374,6 +381,9 @@ Intersection getRaymarchedIntersection(vec2 uv, out int hitObj)
 
     for (int step; step < MAX_RAY_STEPS; step++) {
         vec3 qPoint = r.origin + r.direction * distancet;
+        if(isRayTooLong(qPoint, r.origin)) {
+           break; 
+        } 
         float currentDistance = sceneSDF(qPoint, hitObj);
         if (currentDistance < EPSILON) { 
             // something was hit by our ray!
@@ -383,9 +393,7 @@ Intersection getRaymarchedIntersection(vec2 uv, out int hitObj)
             return intersection;
         }
         distancet += currentDistance;
-        if(isRayTooLong(qPoint, r.origin)) {
-           break; 
-        } 
+        
     }
 
     return intersection;
@@ -448,7 +456,7 @@ vec3 computeMaterial(int hitObj, vec3 p, vec3 n) {
     vec3 color = albedo *
                  LIGHT_COLOR *
                  max(0.0, dot(n, normalize(LIGHT_POS - p))) *
-                 softShadow(normalize(LIGHT_POS - p), p, 0.1, hitObj);
+                 softShadow(normalize(LIGHT_POS- p), p, 0.1, hitObj);
 
     // fake global illumination
     color += albedo * LIGHT_COLOR * max(0.0, dot(n, normalize(LIGHT_POS - p))); // shadow-casting light
