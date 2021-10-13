@@ -13,13 +13,101 @@ int MAX_RAY_STEPS = 128;
 float FOV = 45.0;
 float EPSILON = 1e-3;
 vec3 LIGHT_DIR = vec3(-1.0, 5.0, -5.0);
+const float HALF_PI = 3.14159 * 0.5;
+
+// OBJ IDS
+int TABLE = 0;
+int SOUPFACE = 1;
+int SOUPEYES = 2;
+int BOWL = 3;
+int SOUPMOUTH = 4;
+
+// COLORS
+vec3 AMBIENTCOLOR = vec3(0.3);
+vec3 SOUPCOLOR = vec3(255.0, 246.0, 196.0) / 255.0;
+vec3 TABLECOLOR = vec3(150.0, 13.0, 0.0) / 255.0;
+vec3 BOWLCOLOR = vec3(237.0, 236.0, 232.0) / 255.0;
+vec3 SOUPEYECOLOR = vec3(255.0, 252.0, 245.0) / 255.0;
+vec3 SOUPIRISCOLOR = vec3(235.0, 149.0, 52.0) / 255.0;
+vec3 SOUPMOUTHCOLOR = vec3(230.0, 203.0, 165.0) / 255.0;
+vec3 SOUPTEXTURECOLOR = vec3(247.0, 216.0, 74.0) / 255.0;
 
 // SDF CONSTANTS
 float S1RADIUS = 7.0;
 float S2RADIUS = 6.6;
 float SOUPRADIUS = 9.0;
-vec3 TABLEDIMS = vec3(50.0, 3.0, 20.0);
+vec3 TABLEDIMS = vec3(20.0, 3.0, 20.0);
+vec3 BOUNDINGBOXDIMS = vec3(25.0, 50.0, 25.0);
+float IRISRADIUS = 0.52;
+vec2 IRISOFFSET = vec2(0.5, 1.0); // vec2(x, z) not vec2(x, y)
 
+// NOISY SOUP COLOR
+//FBM NOISE FIRST VARIANT
+float random3D(vec3 p) {
+    return sin(length(vec3(fract(dot(p, vec3(161.1, 121.8, 160.2))), 
+                            fract(dot(p, vec3(120.5, 161.3, 160.4))),
+                            fract(dot(p, vec3(161.4, 161.2, 122.5))))) * 4390.906);
+}
+
+float interpolateNoise3D(float x, float y, float z)
+{
+    int intX = int(floor(x));
+    float fractX = fract(x);
+    int intY = int(floor(y));
+    float fractY = fract(y);
+    int intZ = int(floor(z));
+    float fractZ = fract(z);
+
+    float v1 = random3D(vec3(intX, intY, intZ));
+    float v2 = random3D(vec3(intX + 1, intY, intZ));
+    float v3 = random3D(vec3(intX, intY + 1, intZ));
+    float v4 = random3D(vec3(intX + 1, intY + 1, intZ));
+
+    float v5 = random3D(vec3(intX, intY, intZ + 1));
+    float v6 = random3D(vec3(intX + 1, intY, intZ + 1));
+    float v7 = random3D(vec3(intX, intY + 1, intZ + 1));
+    float v8 = random3D(vec3(intX + 1, intY + 1, intZ + 1));
+
+
+    float i1 = mix(v1, v2, fractX);
+    float i2 = mix(v3, v4, fractX);
+
+    //mix between i1 and i2
+    float i3 = mix(i1, i2, fractY);
+
+    float i4 = mix(v5, v6, fractX);
+    float i5 = mix(v7, v8, fractX);
+
+    //mix between i3 and i4
+    float i6 = mix(i4, i5, fractY);
+
+    //mix between i3 and i6
+    float i7 = mix(i3, i6, fractZ);
+
+    return i7;
+}
+
+float fbmNoise(vec3 v)
+{
+    float total = 0.0;
+    float persistence = 0.3;
+    float frequency = 1.0;
+    float amplitude = 2.0;
+    int octaves = 3;
+
+    for (int i = 1; i <= octaves; i++) {
+        total += amplitude * interpolateNoise3D(frequency * v.x, frequency * v.y, frequency * v.z);
+        frequency *= 2.7;
+        amplitude *= persistence;
+    }
+    return total;
+}
+
+vec3 getSoupFaceColor(vec3 pos) {
+  //return clamp(fbmNoise(pos), 0.1, 0.3) * SOUPTEXTURECOLOR + SOUPCOLOR;
+  float noiseFac = clamp(fbmNoise(pos), 0.0, 1.0);
+  return mix(SOUPCOLOR, SOUPTEXTURECOLOR, noiseFac);
+}
 // SCENE STRUCTS
 struct Ray 
 {
@@ -181,7 +269,9 @@ float smin( float a, float b, float k )
     return mix( b, a, h ) - k*h*(1.0-h);
 }
 
-float faceSDF(vec3 queryPos) {
+//SOUP FUNCTIONS
+
+float faceSDF(vec3 queryPos, inout int objHit) {
     float soupBase = sdSolidAngle(queryPos + vec3(0.0, 7.0, 0.0), vec2(0.8), SOUPRADIUS);
 
     // soup face construction
@@ -227,27 +317,37 @@ float faceSDF(vec3 queryPos) {
     float toplip = sdEllipsoid(queryPos - vec3(3.2, 0.5, 0.0), vec3(0.7, 1.3, 1.5));
     float bottomlip = sdEllipsoid(queryPos - vec3(3.9, 0.05, 0.0), vec3(0.7, 1.3, 1.5));
     float smoothlip = opSmoothUnion(toplip, bottomlip, 0.5);
-    smoothlip = opSmoothUnion(soupBase, smoothlip, 0.2);
-    
-    //Irises
-    float riris = sdfSphere(vec3(0.0), vec3(lEyePos), 3.0);
 
+    float smoothlip2 = opSmoothUnion(soupBase, smoothlip, 0.2);
+    
     //chicken soup bits
     float t = soupBase;
+    objHit = SOUPFACE;
     t = min(t, soupLEyelid);
     t = min(t, soupREyelid);
     t = min(t, soupLEyeBall);
     t = min(t, soupREyeBall);
+    if (t == soupLEyeBall || t == soupREyeBall) {
+      objHit = SOUPEYES;
+    }
     t = min(t, nose);
     t = min(t, lCheekFaceBlend);
     t = min(t, rCheekFaceBlend);
     t = min(t, smoothlip);
+    if (t == smoothlip) {
+      objHit = SOUPMOUTH;
+    }
+    t = min(t, smoothlip2);
 
     return t;//mix(t, soupBase, clamp(cos(u_Time * 0.1), 0.0, 1.0));
+    //return mix(t, soupBase, clamp(cos(u_Time * 0.1), 0.0, 1.0));
 }
 
-float sceneSDF(vec3 queryPos) 
+float sceneSDF(vec3 queryPos, inout int objHit) 
 {
+  float boundingBoxDist = sdBox(queryPos, BOUNDINGBOXDIMS);
+
+  if (boundingBoxDist < EPSILON) {
     float table = sdBox(queryPos + vec3(0.0, 8.0, 0.0), TABLEDIMS);
     float sphere1 = sdfSphere(queryPos, vec3(0.0), S1RADIUS); 
     float innerSphere1 = sdfSphere(queryPos, vec3(0.0), S2RADIUS);
@@ -258,7 +358,7 @@ float sceneSDF(vec3 queryPos)
     normalSoup = max(normalSoup, queryPos.y + 0.5);
 
     //mix flat soup with OWO soup
-    float face = mix(faceSDF(queryPos), normalSoup, clamp(cos(u_Time * 0.1), 0.0, 1.0));
+    float face = mix(faceSDF(queryPos, objHit), normalSoup, clamp(cos(u_Time * 0.1), 0.0, 1.0));
     
     /* the max function slices sphere in half
     * courtesy of IQ's demo here: https://www.shadertoy.com/view/MlcBDj
@@ -266,13 +366,22 @@ float sceneSDF(vec3 queryPos)
     float t = max(min(table, bowl), queryPos.y);
     t = min(t, face);
 
-    return t;
-}
+    if (t == table) {
+      objHit = TABLE;
+    }
+    if (t == bowl) {
+      objHit = BOWL;
+    }
 
+    return t;
+  }
+  objHit = -1;
+  return boundingBoxDist;
+}
 // SHADOW
-float shadow(vec3 rayOrigin, vec3 rayDirection, float min_t, float max_t) {
+float shadow(vec3 rayOrigin, inout int objHit, vec3 rayDirection, float min_t, float max_t) {
   for (float t = min_t; t < max_t; ) {
-    float h = sceneSDF(rayOrigin + rayDirection * t);
+    float h = sceneSDF(rayOrigin + rayDirection * t, objHit);
     if (h < EPSILON) {
       return 0.0;
     }
@@ -303,12 +412,12 @@ Ray getRay(vec2 ndcPos) {
   return r; 
 }
 
-vec3 estimateNormal(vec3 p)
+vec3 estimateNormal(vec3 p, inout int objHit)
 {
     vec2 d = vec2(0.0, EPSILON);
-    float x = sceneSDF(p + d.yxx) - sceneSDF(p - d.yxx);
-    float y = sceneSDF(p + d.xyx) - sceneSDF(p - d.xyx);
-    float z = sceneSDF(p + d.xxy) - sceneSDF(p - d.xxy);
+    float x = sceneSDF(p + d.yxx, objHit) - sceneSDF(p - d.yxx, objHit);
+    float y = sceneSDF(p + d.xyx, objHit) - sceneSDF(p - d.xyx, objHit);
+    float z = sceneSDF(p + d.xxy, objHit) - sceneSDF(p - d.xxy, objHit);
     
     return normalize(vec3(x,y,z));
 }
@@ -321,13 +430,15 @@ Intersection getRaymarchedIntersection(vec2 uv) {
   float dist_t = 0.0;
   for (int st; st < MAX_RAY_STEPS; ++st) {
     vec3 queryPoint = r.origin + r.direction * dist_t;
-    float distFromScene = sceneSDF(queryPoint);
+    int objHit;
+    float distFromScene = sceneSDF(queryPoint, objHit);
 
     if (distFromScene < EPSILON) {
       //we've hit something
       intersection.position = queryPoint;
       intersection.distance_t = distFromScene;
-      intersection.normal = estimateNormal(queryPoint);
+      intersection.objectHit = objHit;
+      intersection.normal = estimateNormal(queryPoint, objHit);
       return intersection;
     }
 
@@ -339,24 +450,43 @@ Intersection getRaymarchedIntersection(vec2 uv) {
 
 vec3 getSceneColor(vec2 uv) {
   Intersection intersection = getRaymarchedIntersection(uv);
-    if (intersection.distance_t > 0.0)
-    { 
-        // CALCULATE ALL LIGHTING
-        // LAMBERTIAN LIGHTING
-        float diffuseTerm = dot(intersection.normal, normalize(LIGHT_DIR));
-        float ambientTerm = 0.1;
+  if (intersection.distance_t > 0.0)
+  { 
+      // CALCULATE ALL LIGHTING
+      // LAMBERTIAN LIGHTING
+      float diffuseTerm = dot(intersection.normal, normalize(LIGHT_DIR));
+      float ambientTerm = 0.1;
 
-        diffuseTerm = clamp(diffuseTerm, 0.0, 1.0);
+      diffuseTerm = clamp(diffuseTerm, 0.0, 1.0);
 
-        float lambertIntensity = diffuseTerm + ambientTerm;
+      float lambertIntensity = diffuseTerm + ambientTerm;
 
-        // CALCULATE ALL COLOR
-        float shadowFactor = shadow(intersection.position, normalize(LIGHT_DIR), 0.1, 7.0);
-        vec3 color = vec3(1.0) * shadowFactor;
-        return color * lambertIntensity;
-        //return vec3(shadowFactor);
+      // CALCULATE ALL COLOR
+      int shadowHitObject;
+      float shadowFactor = shadow(intersection.position, shadowHitObject, normalize(LIGHT_DIR), 0.1, 7.0);
+      vec3 materialColor = AMBIENTCOLOR;
+      if (intersection.objectHit == SOUPFACE) {
+        materialColor = getSoupFaceColor(intersection.position);
+      } else if (intersection.objectHit == TABLE) {
+        materialColor = TABLECOLOR;
+      } else if (intersection.objectHit == BOWL) {
+        materialColor = BOWLCOLOR;
+      } else if (intersection.objectHit == SOUPEYES) {
+
+        // POLKA DOT PATTERN 
+        // courtesy of https://weber.itn.liu.se/~stegu/webglshadertutorial/shadertutorial.html 
+        float frequency = 0.5;
+        vec2 nearest = 2.0 * fract(frequency * (vec2(intersection.position.x, intersection.position.z) - IRISOFFSET)) - 1.0;
+        float dist = length(nearest);
+        float radius = IRISRADIUS;
+        materialColor = mix(SOUPIRISCOLOR, SOUPEYECOLOR, step(radius, dist));
+      } else if (intersection.objectHit == SOUPMOUTH) {
+        materialColor = mix(SOUPMOUTHCOLOR, SOUPCOLOR, intersection.position.y);
+      }
+      vec3 finalcolor = materialColor * shadowFactor;
+      return finalcolor * lambertIntensity;
     }
-    return vec3(0.0);
+  return vec3(0.3);
 }
 
 //MAIN
