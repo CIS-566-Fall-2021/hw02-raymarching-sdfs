@@ -197,9 +197,9 @@ float sdfGong(vec3 query_position, vec3 pos, mat3 gongTransform, out float inner
     vec3 gongPos = gongTransform * pos;
     vec3 gongQuery = gongTransform * query_position;
     baseGong = sdfRoundedCylinder(gongQuery, gongPos, gongRadius, 0.05, gongDepth);
-    innerGong = sdfRoundedCylinder(gongQuery, gongPos, gongRadius * 0.7, 0.05, gongDepth * 1.1);
+    innerGong = sdfRoundedCylinder(gongQuery, vec3(gongPos.x, gongPos.y - 0.1, gongPos.z), gongRadius * 0.7, 0.05, gongDepth * 1.2);
 
-    vec3 beamSize_h = vec3(2.3, 0.1, 0.1);
+    vec3 beamSize_h = vec3(2.3, 0.1, 0.15);
     vec3 beamSize_v = vec3(0.08, 3.0, 0.08);
     float beam_h1 = sdfRoundBox(query_position, vec3(pos.x, pos.y - 2.0, pos.z), beamSize_h, 0.03);
     float beam_h2 = sdfRoundBox(query_position, vec3(pos.x, pos.y + 2.0, pos.z), beamSize_h, 0.03);
@@ -207,7 +207,7 @@ float sdfGong(vec3 query_position, vec3 pos, mat3 gongTransform, out float inner
     float beam_v1 = sdfRoundBox(query_position, vec3(pos.x - 1.8, pos.y, pos.z), beamSize_v, 0.03);
     float beam_v2 = sdfRoundBox(query_position, vec3(pos.x + 1.8, pos.y, pos.z), beamSize_v, 0.03);
 
-    float gong =  smin(baseGong, innerGong, 0.2);
+    float gong =  min(baseGong, innerGong);
     float beamsHorizontal = min(beam_h1, min(beam_h2, beam_h3));
     float beamsVertical = min(beam_v1, beam_v2);
     beams = smin(beamsVertical, beamsHorizontal, 0.05);
@@ -267,16 +267,24 @@ float sceneSDF(vec3 queryPos, out Object obj)
         mat3 gong1Transform = rotationX(PI/2.0);
         vec3 gong2Pos = vec3(0.0, 1.5, -5.6);
         mat3 gong2Transform = rotationX(3.0 * PI / 2.0);
-        float innerGong;
-        float baseGong;
-        float beams;
-        float gong1 = sdfGong(queryPos, gong1Pos, gong1Transform, innerGong, baseGong, beams);
-        float gong2 = sdfGong(queryPos, gong2Pos, gong2Transform, innerGong, baseGong, beams);
+
+        float innerGong1;
+        float baseGong1;
+        float beams1;
+        float gong1 = sdfGong(queryPos, gong1Pos, gong1Transform, innerGong1, baseGong1, beams1);
+        
+        float innerGong2;
+        float baseGong2;
+        float beams2;
+        float gong2 = sdfGong(queryPos, gong2Pos, gong2Transform, innerGong2, baseGong2, beams2);
 
         // Put it all together
         floorPlane = opSmoothSubtraction(floorCylinders, floorPlane, 0.05);
         floorAndWalls = smin(floorPlane, walls, 1.0);
         float allCylinders = min(cylinders, floorAndWalls);
+        float innerGongs = min(innerGong1, innerGong2);
+        float baseGongs = min(baseGong1, baseGong2);
+        float beams = min(beams1, beams2);
         float gongs = min(gong1, gong2);
         float pendulumAndGongs = min(pendulum, gongs);
 
@@ -285,8 +293,10 @@ float sceneSDF(vec3 queryPos, out Object obj)
 
         if (final == floorPlane) { obj.id = 1;}
         else if (final == cylinders) {obj.id = 2;}
-        else if (final == gongs) {obj.id = 3;}
-        else if (final == pendulum) {obj.id = 4;}
+        else if (final == innerGongs) {obj.id = 3;}
+        else if (final == baseGongs) {obj.id = 4;}
+        else if (final == beams) {obj.id = 5;}
+        else if (final == pendulum) {obj.id = 6;}
 
         return final;
     }
@@ -403,8 +413,10 @@ vec3 computeMaterial(Intersection intersection, out Object obj) {
     // Create materials
     Material floorMat = Material(rgb(vec3(230.0, 189.0, 181.0)), 0.0, 0.0);
     Material cylinderMat = Material(rgb(vec3(235.0, 126.0, 126.0)), 1.0, 0.04);
-    Material gongMat = Material(rgb(vec3(250.0, 250.0, 250.0)), 0.0, 0.0);
-	Material pendulumMat = Material(rgb(vec3(232.0, 161.0, 86.0)), 2.0, 0.015);
+    Material innerGongMat = Material(rgb(vec3(250.0, 250.0, 250.0)), 1.0, 0.1);
+    Material baseGongMat = Material(rgb(vec3(50.0, 50.0, 50.0)), 1.0, 0.1);
+    Material beamMat = Material(rgb(vec3(241.0, 187.0, 147.0)), 1.0, 0.1);
+	Material pendulumMat = Material(rgb(vec3(241.0, 187.0, 147.0)), 2.0, 0.015);
 
     switch(obj.id)
     {
@@ -420,11 +432,19 @@ vec3 computeMaterial(Intersection intersection, out Object obj) {
             obj.material = cylinderMat;
             break;
 
-        case 3: // gongs
-            obj.material = gongMat;
+        case 3: // inner gongs
+            obj.material = innerGongMat;
             break;
 
-        case 4: // pendulum
+        case 4: // base gongs
+            obj.material = baseGongMat;
+            break;
+
+        case 5: // beams
+            obj.material = beamMat;
+            break;
+
+        case 6: // pendulum
             obj.material = pendulumMat;
             break;
     }
@@ -435,7 +455,7 @@ vec3 computeMaterial(Intersection intersection, out Object obj) {
     vec3 totalLight = 0.7 * warmLight.color * getDirLight(intersection, warmLight, obj);
 
     totalLight += 0.9 * coolLight.color * getDirLight(intersection, coolLight, obj);
-    totalLight += 0.3 * topLight.color * getDirLight(intersection, topLight, obj);
+    totalLight += 0.4 * topLight.color * getDirLight(intersection, topLight, obj);
 
     vec3 color = obj.material.color * totalLight;
     return color;
