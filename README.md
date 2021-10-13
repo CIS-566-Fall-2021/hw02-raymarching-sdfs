@@ -2,9 +2,7 @@
 # Link:
 https://gserena01.github.io/hw02-raymarching-sdfs/
 # Images:
-![image](https://user-images.githubusercontent.com/60444726/136303288-56a5e5cf-45c0-4c4f-8d5b-71ce14544b6e.png)
 
-https://user-images.githubusercontent.com/60444726/136304635-f42c05d8-0661-4741-a4df-19935e79727d.mp4
 
 Source Image:
 
@@ -27,3 +25,15 @@ Source Image:
 - http://demofox.org/biasgain.html for bias and gain functions used to transition during animation
 - https://www.iquilezles.org/www/articles/distfunctions/distfunctions.htm for sdf functions to create, smooth blend, and transform primitives
 - https://www.iquilezles.org/www/articles/rmshadows/rmshadows.htm for soft shadows
+
+
+# Prior Version:
+
+![image](https://user-images.githubusercontent.com/60444726/136303288-56a5e5cf-45c0-4c4f-8d5b-71ce14544b6e.png)
+
+https://user-images.githubusercontent.com/60444726/136304635-f42c05d8-0661-4741-a4df-19935e79727d.mp4
+
+# Bloopers:
+
+![wooden bug](https://user-images.githubusercontent.com/60444726/137224445-b18101aa-21ef-42b4-81d6-0970a217e678.png)
+
