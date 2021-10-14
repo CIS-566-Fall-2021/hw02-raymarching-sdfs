@@ -1,81 +1,46 @@
-# CIS 566 Homework 2: Implicit Surfaces
+# Serena Gandhi (gserena), Raymarching SDFs 
+# Link:
+https://gserena01.github.io/hw02-raymarching-sdfs/
+# Images:
 
-## Objective
-- Gain experience with signed distance functions
-- Experiment with animation curves
+![image](https://user-images.githubusercontent.com/60444726/137232616-f34e94f8-cda8-42d9-be07-123af8428b9e.png)
 
-## Base Code
+https://user-images.githubusercontent.com/60444726/137233322-90720e27-26cc-41b0-b562-e14f65ca7399.mp4
 
-Please feel free to use this code as a base (https://www.shadertoy.com/view/fsdXzM)
+Source Image:
 
-The code we have provided for this assignment features the following:
-- A square that spans the range [-1, 1] in X and Y that is rendered with a
-shader that does not apply a projection matrix to it, thus rendering it as the
-entirety of your screen
-- TypeScript code just like the code in homework 1 to set up a WebGL framework
-- Code that passes certain camera attributes (listed in the next section),
-the screen dimensions, and a time counter to the shader program.
-
-## Assignment Requirements
-- __(10 points)__ Modify the provided `flat-frag.glsl` to cast rays from a
-virtual camera. We have set up uniform variables in your shader that take in
-the eye position, reference point position, and up vector of the `Camera` in
-the provided TypeScript code, along with a uniform that stores the screen width
-and height. Using these uniform variables, and only these uniform variables,
-you must write a function that uses the NDC coordinates of the current fragment
-(i.e. its fs_Pos value) and projects a ray from that pixel. Refer to the [slides
-on ray casting](https://docs.google.com/presentation/d/e/2PACX-1vSN5ntJISgdOXOSNyoHimSVKblnPnL-Nywd6aRPI-XPucX9CeqzIEGTjFTwvmjYUgCglTqgvyP1CpxZ/pub?start=false&loop=false&delayms=60000&slide=id.g27215b64c6_0_107)
-from CIS 560 for reference on how to cast a ray without an explicit
-view-projection matrix. You'll have to compute your camera's Right vector based
-on the provided Up vector, Eye point, and Ref point. You can test your ray
-casting function by converting your ray directions to colors using the formula
-`color = 0.5 * (dir + vec3(1.0, 1.0, 1.0))`. If your screen looks like the
-following image, your rays are being cast correctly:
-![](rayDir.png)
-- __(70 points)__ Create a scene using raymarched signed distance functions.
-The subject of your scene should be based on some reference image, such as a
-shot from a movie or a piece of artwork. Your scene should incorporate the
-following elements:
-  - The SDF combination operation Smooth Blend.
-  - Basic Lambertian reflection using a hard-coded light source and SDF surface normals.
-  - Animation of at least one element of the scene, with at least two Toolbox Functions
-  used to control the animation(s).
-  - Hard-edged shadows cast by shapes in the scene onto one another using a shadow-feeler ray.
-
-For the next assignment you will build upon this scene with procedural textures and more
-advanced lighting and reflection models, so don't worry if your scene looks a bit drab
-given the requirements listed above.
-
-- __(10 points)__ Following the specifications listed
-[here](https://github.com/pjcozzi/Articles/blob/master/CIS565/GitHubRepo/README.md),
-create your own README.md, renaming this file to INSTRUCTIONS.md. Don't worry
-about discussing runtime optimization for this project. Make sure your
-README contains the following information:
-  - Your name and PennKey
-  - Citation of any external resources you found helpful when implementing this
-  assignment.
-  - A link to your live github.io demo (refer to the pinned Piazza post on
-    how to make a live demo through github.io)
-  - An explanation of the techniques you used to model and animate your scene.
-
-## Useful Links
-- [IQ's Article on SDFs](http://www.iquilezles.org/www/articles/distfunctions/distfunctions.htm)
-- [IQ's Article on Smooth Blending](http://www.iquilezles.org/www/articles/smin/smin.htm)
-- [IQ's Article on Useful Functions](http://www.iquilezles.org/www/articles/functions/functions.htm)
-- [Breakdown of Rendering an SDF Scene](http://www.iquilezles.org/www/material/nvscene2008/rwwtt.pdf)
+![image](https://user-images.githubusercontent.com/60444726/136303143-f7881cd9-7931-42ab-ad39-ae02c3236569.png)
 
 
-## Submission
-Commit and push to Github, then submit a link to your commit on Canvas. Remember
-to make your own README!
 
-## Inspiration
-- [Alien Corridor](https://www.shadertoy.com/view/4slyRs)
-- [The Evolution of Motion](https://www.shadertoy.com/view/XlfGzH)
-- [Fractal Land](https://www.shadertoy.com/view/XsBXWt)
-- [Voxel Edges](https://www.shadertoy.com/view/4dfGzs)
-- [Snail](https://www.shadertoy.com/view/ld3Gz2)
-- [Cubescape](https://www.shadertoy.com/view/Msl3Rr)
-- [Journey Tribute](https://www.shadertoy.com/view/ldlcRf)
-- [Stormy Landscape](https://www.shadertoy.com/view/4ts3z2)
-- [Generators](https://www.shadertoy.com/view/Xtf3Rn)
+
+# Overview:
+- uses signed distance functions to model a mug, a pair of scissors, and the ground plane
+- SDFs are combined using smooth blending and smooth subtraction operations
+- features several different colors of materials
+- Lambertian shading is applied to all materials
+- soft shadows are cast by SDF primitives
+- Scissors and objects are animated by moving their local origins according to time modified by Bias and Gain functions, for smoother, non-linear motion.
+- Features three different lights: one to cast shadows, one to provide ambient light, and one to serve as a fill light
+- Rendering optimized to allow for smoother animation by limiting how long rays can extend during ray-marching and only checking for scene geometry (during ray-marching and shadow-marching) within a bounding box
+
+
+# External Sources:
+- https://github.com/dmnsgn/glsl-rotate for rotation matrices used to rotate primitives
+- http://demofox.org/biasgain.html for bias and gain functions used to transition during animation
+- https://www.iquilezles.org/www/articles/distfunctions/distfunctions.htm for sdf functions to create, smooth blend, and transform primitives
+- https://www.iquilezles.org/www/articles/rmshadows/rmshadows.htm for soft shadows
+
+
+# Prior Version:
+
+![image](https://user-images.githubusercontent.com/60444726/136303288-56a5e5cf-45c0-4c4f-8d5b-71ce14544b6e.png)
+
+https://user-images.githubusercontent.com/60444726/136304635-f42c05d8-0661-4741-a4df-19935e79727d.mp4
+
+# Bloopers:
+
+Pinocchio Scene: Issue caused by allowing the bounding box to cast shadows on the scene
+
+![wooden bug](https://user-images.githubusercontent.com/60444726/137224445-b18101aa-21ef-42b4-81d6-0970a217e678.png)
+
