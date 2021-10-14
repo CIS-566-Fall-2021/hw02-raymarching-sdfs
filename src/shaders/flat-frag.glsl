@@ -13,7 +13,7 @@ int MAX_RAY_STEPS = 128;
 float FOV = 45.0;
 float EPSILON = 1e-3;
 vec3 LIGHT_DIR = vec3(-1.0, 5.0, -5.0);
-vec3 LIGHT_DIR2 = vec3(2.0, 5.0, -5.0);
+vec3 LIGHT_DIR2 = vec3(2.0, 5.0, 5.0);
 const float HALF_PI = 3.14159 * 0.5;
 
 // OBJ IDS
@@ -27,6 +27,7 @@ int PEA = 6;
 
 // COLORS
 vec3 LIGHT2COLOR = vec3(0.5, 0.0, 0.0);
+vec3 LIGHTCOLOR = vec3(0.0,0.0,0.5);
 
 vec3 AMBIENTCOLOR = vec3(0.3);
 vec3 SOUPCOLOR = vec3(255.0, 246.0, 196.0) / 255.0;
@@ -569,6 +570,21 @@ Intersection getRaymarchedIntersection(vec2 uv) {
   return intersection;
 }
 
+//blinn phong specular intensity
+float bpSpecIntensity(Intersection inter) {
+  vec3 V = normalize(vec3(u_Eye) - vec3(inter.position));
+  vec3 L = normalize(LIGHT_DIR - vec3(inter.position));
+  vec4 avg_h = vec4((V + L) / 2.0, 0.0);
+  float specIntensity = max(pow(clamp(dot(avg_h, vec4(inter.normal, 0.0)), 0.0, 1.0), 10.0), 0.0);
+
+  vec3 L2 = normalize(LIGHT_DIR2 - vec3(inter.position));
+  vec4 avg_h2 = vec4((V + L2) / 2.0, 0.0);
+  specIntensity += max(pow(clamp(dot(avg_h2, vec4(inter.normal, 0.0)), 0.0, 1.0), 10.0), 0.0);
+
+  //specIntensity *= LIGHT2COLOR;
+  return specIntensity;
+}
+
 vec3 getSceneColor(vec2 uv) {
   Intersection intersection = getRaymarchedIntersection(uv);
   if (intersection.distance_t > 0.0)
@@ -590,12 +606,7 @@ vec3 getSceneColor(vec2 uv) {
       if (intersection.objectHit == SOUPFACE) {
         materialColor = getSoupFaceColor(intersection.position);
         // CALCULATE BLINN PHONG LIGHTING FOR SOUP FACE
-
-        vec3 V = normalize(vec3(u_Eye) - vec3(intersection.position));
-        vec3 L = normalize(LIGHT_DIR - vec3(intersection.position));
-        vec4 avg_h = vec4((V + L) / 2.0, 0.0);
-        float specIntensity = max(pow(clamp(dot(avg_h, vec4(intersection.normal, 0.0)), 0.0, 1.0), 10.0), 0.0);
-        
+        float specIntensity = bpSpecIntensity(intersection);
         materialColor = getSoupFaceColor(intersection.position) * (lambertIntensity + specIntensity);
       } else if (intersection.objectHit == TABLE) {
         materialColor = TABLECOLOR * lambertIntensity;
