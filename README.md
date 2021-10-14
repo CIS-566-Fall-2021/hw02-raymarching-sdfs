@@ -1,51 +1,19 @@
-# CIS 566 Homework 2: Implicit Surfaces
+# CIS 566 Homework 3: Advanced Raymarched Scenes
 
 ## Objective
 - Gain experience with signed distance functions
 - Experiment with animation curves
+- Create a presentable portfolio piece
 
 ## Base Code
 
-Please feel free to use this code as a base (https://www.shadertoy.com/view/fsdXzM)
-
-The code we have provided for this assignment features the following:
-- A square that spans the range [-1, 1] in X and Y that is rendered with a
-shader that does not apply a projection matrix to it, thus rendering it as the
-entirety of your screen
-- TypeScript code just like the code in homework 1 to set up a WebGL framework
-- Code that passes certain camera attributes (listed in the next section),
-the screen dimensions, and a time counter to the shader program.
+You will copy your implementation of hw02 into your hw03 repository.
 
 ## Assignment Requirements
-- __(10 points)__ Modify the provided `flat-frag.glsl` to cast rays from a
-virtual camera. We have set up uniform variables in your shader that take in
-the eye position, reference point position, and up vector of the `Camera` in
-the provided TypeScript code, along with a uniform that stores the screen width
-and height. Using these uniform variables, and only these uniform variables,
-you must write a function that uses the NDC coordinates of the current fragment
-(i.e. its fs_Pos value) and projects a ray from that pixel. Refer to the [slides
-on ray casting](https://docs.google.com/presentation/d/e/2PACX-1vSN5ntJISgdOXOSNyoHimSVKblnPnL-Nywd6aRPI-XPucX9CeqzIEGTjFTwvmjYUgCglTqgvyP1CpxZ/pub?start=false&loop=false&delayms=60000&slide=id.g27215b64c6_0_107)
-from CIS 560 for reference on how to cast a ray without an explicit
-view-projection matrix. You'll have to compute your camera's Right vector based
-on the provided Up vector, Eye point, and Ref point. You can test your ray
-casting function by converting your ray directions to colors using the formula
-`color = 0.5 * (dir + vec3(1.0, 1.0, 1.0))`. If your screen looks like the
-following image, your rays are being cast correctly:
-![](rayDir.png)
-- __(70 points)__ Create a scene using raymarched signed distance functions.
-The subject of your scene should be based on some reference image, such as a
-shot from a movie or a piece of artwork. Your scene should incorporate the
-following elements:
-  - The SDF combination operation Smooth Blend.
-  - Basic Lambertian reflection using a hard-coded light source and SDF surface normals.
-  - Animation of at least one element of the scene, with at least two Toolbox Functions
-  used to control the animation(s).
-  - Hard-edged shadows cast by shapes in the scene onto one another using a shadow-feeler ray.
-
-For the next assignment you will build upon this scene with procedural textures and more
-advanced lighting and reflection models, so don't worry if your scene looks a bit drab
-given the requirements listed above.
-
+- __(35 points) Artwork Replication__ Your raymarched scene should attempt to replicate the appearance of your inspiration (include picture) with clear effort put into the replication.
+- __(25 points) Materials__ Your scene should be composed of at least three different materials. We define a material to be a surface reflection model combined with some base surface color; texturing is optional.
+- __(10 points) Lighting and Shadows__ Light your scene with at least three light sources. At least one of your light sources must cast shadows, and they should be soft shadows using the penumbra shadows algorithm we discussed in class. Consider following the "Key Light, Fill Light, GI Light" formulation from the in-class example.
+- __(20 points) Performance__ The frame rate of your scene must be at least 10FPS.
 - __(10 points)__ Following the specifications listed
 [here](https://github.com/pjcozzi/Articles/blob/master/CIS565/GitHubRepo/README.md),
 create your own README.md, renaming this file to INSTRUCTIONS.md. Don't worry
@@ -54,8 +22,7 @@ README contains the following information:
   - Your name and PennKey
   - Citation of any external resources you found helpful when implementing this
   assignment.
-  - A link to your live github.io demo (refer to the pinned Piazza post on
-    how to make a live demo through github.io)
+  - A link to your live github.io demo
   - An explanation of the techniques you used to model and animate your scene.
 
 ## Useful Links
@@ -66,8 +33,7 @@ README contains the following information:
 
 
 ## Submission
-Commit and push to Github, then submit a link to your commit on Canvas. Remember
-to make your own README!
+Commit and push to Github, then make a pull request on the hw03 repository with a title containing your name, and a comment containing a link to your live demo.
 
 ## Inspiration
 - [Alien Corridor](https://www.shadertoy.com/view/4slyRs)
