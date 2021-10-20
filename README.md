@@ -1,5 +1,12 @@
 # CIS 566 Homework 2: Implicit Surfaces
 
+David Li 13109274
+
+https://thecollegeboardofc.github.io/hw02-raymarching-sdfs/
+
+So uh... the animation does not really work because the sdf's are too computationally intensive. In fact, I can't reven render the full scene on my GTX 2070, so I need to make some optimizations. Ran out of time for that though. Used sdfs like capsule and quad to make the fuselage. Used gain to animate the movement of the fuselage, but it lags so much that it does not really move. Used smooth blend to make the fuselage more cohesive.
+
+
 ## Objective
 - Gain experience with signed distance functions
 - Experiment with animation curves
