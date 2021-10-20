@@ -19,7 +19,9 @@ const vec3 ORIGIN = vec3(0.0, 0.0, 0.0);
 const vec3 WORLD_UP = vec3(0.0, 1.0, 0.0);
 const vec3 WORLD_RIGHT = vec3(-1.0, 0.0, 0.0);
 const vec3 WORLD_FORWARD = vec3(0.0, 0.0, 1.0);
+
 const vec3 LIGHT_DIR[3] = vec3[3](vec3(2.0, 8.0, 2.0), vec3(1.0, 8.0, 1.0), vec3(0.0, 0.0, 10.0));
+
 
 struct Ray 
 {
@@ -41,6 +43,7 @@ struct Intersection
     int material_id;
     vec3 color;
     float res;
+
 };
 
 float getBias(float bias, float t)
@@ -341,7 +344,6 @@ Intersection getIntersectionFromRay(Ray ray) {
         intersection.color = d.color;
         return getNormal(intersection);
       }
-      
       if (dist > MIN_STEP) {
         t += dist;
       } else {
@@ -349,10 +351,12 @@ Intersection getIntersectionFromRay(Ray ray) {
       }
       //intersection.res = min(intersection.res, 4. * dist / t);
 
+
     } 
     intersection.distance_t = -1.0;
-    
+
     intersection.color = vec3(100., 100., 100.);
+
     return intersection;
 }
 
@@ -363,6 +367,7 @@ Intersection getRaymarchedIntersection(vec2 uv)
 }
 
 //returns true if in shadow
+
 float checkInShadow(Intersection inte) {
     vec3 p = inte.position;
     float diffuse = 0.;
@@ -402,6 +407,7 @@ vec3 getSceneColor(vec2 uv)
 
         float lightIntensity = diffuseTerm + ambientTerm;
         vec3 col = intersection.color;
+
         vec3(clamp(col * lightIntensity, 0.0, 1.0));
         return vec3(clamp(col * lightIntensity, 0.0, 1.0));
      }
